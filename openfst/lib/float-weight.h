@@ -615,8 +615,14 @@ class Adder<LogWeightTpl<T>> {
       c_ = 0.0;
     } else if (f > sum_) {
       sum_ = internal::KahanLogSum(sum_, f, &c_);
-    } else {
+    } else if (f <= sum_) {
       sum_ = internal::KahanLogSum(f, sum_, &c_);
+    } else {
+      // `f` or `sum_` is NaN (e.g., `NoWeight()`), so neither ordering holds;
+      // propagate `NoWeight()` instead of calling `KahanLogSum`, which assumes
+      // `b >= a`.
+      sum_ = Limits::NumberBad();
+      c_ = 0.0;
     }
     return Sum();
   }

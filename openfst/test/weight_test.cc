@@ -87,6 +87,11 @@ void TestAdder(int n) {
     adder.Add(Weight::One());
   }
   EXPECT_TRUE(ApproxEqual(sum, adder.Sum()));
+
+  // Adding NoWeight onto a finite sum (and adding onto NoWeight) propagates
+  // non-membership without tripping internal DCHECKs.
+  EXPECT_FALSE(adder.Add(Weight::NoWeight()).Member());
+  EXPECT_FALSE(adder.Add(Weight::One()).Member());
 }
 
 template <class Weight>
@@ -327,6 +332,7 @@ TEST(WeightTest, RunTest) {
 
   TestAdder<TropicalWeight>(1000);
   TestAdder<LogWeight>(1000);
+  TestAdder<Log64Weight>(1000);
   TestAdder<RealWeight>(1000);
   TestSignedAdder<SignedLogWeight>(1000);
 
