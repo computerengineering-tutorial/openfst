@@ -243,8 +243,9 @@ class STTableReader {
     const std::vector<std::string>* keys;
   };
 
-  // Positions the stream at the position corresponding to the lower bound for
-  // the specified key.
+  // Positions the stream at the first entry whose key is not less than the
+  // specified key. If every key in the stream is less than the specified key,
+  // positions the stream past its last entry, so that it has no unread entries.
   absl::Status LowerBound(size_t id, absl::string_view find_key) {
     auto* strm = streams_[id].get();
     const auto& positions = positions_[id];
@@ -253,42 +254,41 @@ class STTableReader {
     const std::string seek_error = absl::StrCat(
         "Error seeking in file: ", sources_[id], " for key ", find_key);
 
+    // Keys before `low` are less than `find_key`; keys at or after `high` are
+    // not.
     size_t low = 0;
-    size_t high = positions.size() - 1;
+    size_t high = positions.size();
     std::string key;
     while (low < high) {
       const size_t mid = (low + high) / 2;
       strm->seekg(positions[mid]);
       ReadType(*strm, &key);
-      if (key > find_key) {
-        high = mid;
-      } else if (key < find_key) {
+      if (key < find_key) {
         low = mid + 1;
       } else {
-        for (size_t i = mid; i > low; --i) {
-          strm->seekg(positions[i - 1]);
-          ReadType(*strm, &key);
-          if (key != find_key) {
-            LOG_AND_RETURN_IF_STREAM_FAIL(*strm, strm->seekg(positions[i]),
-                                          seek_error);
-            return absl::OkStatus();
-          }
-        }
-        LOG_AND_RETURN_IF_STREAM_FAIL(*strm, strm->seekg(positions[low]),
-                                      seek_error);
-        return absl::OkStatus();
+        high = mid;
       }
     }
-    LOG_AND_RETURN_IF_STREAM_FAIL(*strm, strm->seekg(positions[low]),
-                                  seek_error);
+    if (low == positions.size()) {
+      LOG_AND_RETURN_IF_STREAM_FAIL(*strm, strm->seekg(0, std::ios_base::end),
+                                    seek_error);
+    } else {
+      LOG_AND_RETURN_IF_STREAM_FAIL(*strm, strm->seekg(positions[low]),
+                                    seek_error);
+    }
     return absl::OkStatus();
   }
 
-  // Adds all streams to the heap.
+  // Adds all streams with unread entries to the heap.
   void MakeHeap() {
     heap_.clear();
     for (size_t i = 0; i < streams_.size(); ++i) {
-      if (positions_[i].empty()) continue;
+      // Skips streams positioned past their last entry, e.g., by `Find` for a
+      // key that is greater than all of their keys.
+      if (positions_[i].empty() ||
+          streams_[i]->tellg() > positions_[i].back()) {
+        continue;
+      }
       ReadType(*streams_[i], &(keys_[i]));
       if (streams_[i]->fail()) {
         FSTERROR() << "STTableReader: Error reading file: " << sources_[i];

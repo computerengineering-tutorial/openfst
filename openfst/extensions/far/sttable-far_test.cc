@@ -176,6 +176,64 @@ TEST_F(FarTest, STTableEmptyFar) {
   ASSERT_TRUE(reader->Done());
 }
 
+// `Find` skips sources whose keys are all less than the key, lands on the
+// first of several equal keys, and leaves the reader `Done()` when no source
+// has a key at or after it.
+TEST_F(FarTest, STTableFindPastLastKey) {
+  const std::string far1 =
+      JoinPath(::testing::TempDir(), "find_past_last_key1.far");
+  const std::string far2 =
+      JoinPath(::testing::TempDir(), "find_past_last_key2.far");
+  std::unique_ptr<STTableFarWriter<LogArc>> writer(
+      STTableFarWriter<LogArc>::Create(far1));
+  writer->Add("1", *fst1_);
+  writer->Add("2", *fst2_);
+  writer->Add("3", *fst3_);
+  writer.reset(STTableFarWriter<LogArc>::Create(far2));
+  writer->Add("10", *fst3_);
+  writer->Add("20", *fst1_);
+  writer->Add("20", *fst3_);  // Duplicate key.
+  writer->Add("30", *fst2_);
+  writer.reset();
+
+  // Single source: every key is less than "4".
+  ABSL_ASSERT_OK_AND_ASSIGN(std::unique_ptr<STTableFarReader<LogArc>> reader,
+                            STTableFarReader<LogArc>::OpenWithStatus(far1));
+  EXPECT_FALSE(reader->Find("4"));
+  EXPECT_TRUE(reader->Done());
+  EXPECT_FALSE(reader->Error());
+  EXPECT_TRUE(reader->Find("3"));
+  ASSERT_FALSE(reader->Done());
+  EXPECT_EQ(reader->GetKey(), "3");
+  EXPECT_TRUE(Equal(*reader->GetFst(), *fst3_));
+
+  // Multiple sources: "30" is only in the second FAR, and every key in the
+  // first FAR is less than it.
+  reader.reset(
+      STTableFarReader<LogArc>::Open(std::vector<std::string>{far1, far2}));
+  ASSERT_NE(reader, nullptr);
+  // Finds the first of several equal keys.
+  EXPECT_TRUE(reader->Find("20"));
+  ASSERT_FALSE(reader->Done());
+  EXPECT_TRUE(Equal(*reader->GetFst(), *fst1_));
+  EXPECT_TRUE(reader->Find("30"));
+  ASSERT_FALSE(reader->Done());
+  EXPECT_EQ(reader->GetKey(), "30");
+  EXPECT_TRUE(Equal(*reader->GetFst(), *fst2_));
+  reader->Next();
+  EXPECT_TRUE(reader->Done());
+
+  // No source has a key at or after "4".
+  EXPECT_FALSE(reader->Find("4"));
+  EXPECT_TRUE(reader->Done());
+  EXPECT_FALSE(reader->Error());
+
+  // Reset() restores full iteration after an unsuccessful Find().
+  reader->Reset();
+  ASSERT_FALSE(reader->Done());
+  EXPECT_EQ(reader->GetKey(), "1");
+}
+
 TEST_F(FarTest, STTableReaderCorruptNumEntries) {
   std::ostringstream ostrm;
   EXPECT_TRUE(WriteType(ostrm, kSTTableMagicNumber));
