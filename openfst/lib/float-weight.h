@@ -776,10 +776,11 @@ class Adder<RealWeightTpl<T>> {
   Weight Add(const Weight& w) {
     using Limits = FloatLimits<T>;
     const T f = w.Value();
-    if (f == Limits::PosInfinity()) {
-      sum_ = f;
-    } else if (sum_ == Limits::PosInfinity()) {
-      return Sum();
+    if (f == Limits::PosInfinity() || sum_ == Limits::PosInfinity()) {
+      // Keeps +inf out of the Kahan compensation, where `inf - inf` would
+      // yield NaN. Plain addition saturates at +inf, but still yields NaN
+      // (NoWeight) when the other operand is NaN or -inf, as `Plus` does.
+      sum_ += f;
     } else {
       sum_ = internal::KahanRealSum(sum_, f, &c_);
     }

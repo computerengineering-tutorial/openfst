@@ -111,6 +111,26 @@ void TestSignedAdder(int n) {
   EXPECT_TRUE(ApproxEqual(sum, adder.Sum()));
 }
 
+// +inf is a member of the real semiring, but NoWeight (NaN) and -inf are not.
+// Adding either of them to +inf, in either order, must yield a non-member as
+// `Plus` does, while adding a finite weight to +inf saturates at +inf.
+template <class Weight>
+void TestRealAdderInfinity() {
+  using Limits = FloatLimits<typename Weight::ValueType>;
+  const Weight inf(Limits::PosInfinity());
+  ASSERT_TRUE(inf.Member());
+  for (const Weight& bad :
+       {Weight::NoWeight(), Weight(Limits::NegInfinity())}) {
+    EXPECT_FALSE(Plus(inf, bad).Member());
+    Adder<Weight> inf_first(inf);
+    EXPECT_FALSE(inf_first.Add(bad).Member());
+    Adder<Weight> bad_first(bad);
+    EXPECT_FALSE(bad_first.Add(inf).Member());
+  }
+  Adder<Weight> adder(inf);
+  EXPECT_EQ(adder.Add(Weight::One()), inf);
+}
+
 template <typename Weight1, typename Weight2>
 void TestWeightConversion(Weight1 w1) {
   // Tests round-trp conversion.
@@ -922,6 +942,11 @@ TEST(SignedLogWeightTest, ConvertNegativelySignedZero) {
             LogWeight::Zero());
   EXPECT_EQ((WeightConvert<SignedLogWeight, TropicalWeight>()(negative_zero)),
             TropicalWeight::Zero());
+}
+
+TEST(RealWeightTest, AdderPropagatesNonMembersThroughInfinity) {
+  TestRealAdderInfinity<RealWeight>();
+  TestRealAdderInfinity<Real64Weight>();
 }
 
 TEST(FloatWeightTest, NaturalLessSpecializations) {
