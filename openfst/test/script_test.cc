@@ -32,6 +32,7 @@
 #include "openfst/lib/arc.h"
 #include "openfst/lib/determinize.h"
 #include "openfst/lib/encode.h"
+#include "openfst/lib/fst.h"
 #include "openfst/lib/properties.h"
 #include "openfst/lib/symbol-table.h"
 #include "openfst/lib/util.h"
@@ -314,6 +315,35 @@ TEST_F(ClassTest, EncodeMapperClassOperations) {
   Encode(&vfstc, &encoder);
   Decode(&vfstc, encoder);
   ASSERT_TRUE(Equal(vfstc_copy, vfstc));
+}
+
+// Applying an `ArcClass` whose weight type does not match the FST or encoder
+// is an error rather than a dereference of a null weight.
+TEST_F(ClassTest, ArcClassWeightTypeMismatch) {
+  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  absl::SetFlag(&FLAGS_fst_error_fatal, false);
+  StdVectorFst vfst;
+  MutableFstClass f(vfst);
+  const auto s = f.AddState();
+  f.AddArc(s, ArcClass(1, 1, WeightClass::One(f.WeightType()), s));
+  const ArcClass log_arc(2, 2, WeightClass::One("log"), s);
+
+  // `SetValue` leaves the arc unchanged.
+  MutableArcIteratorClass aiter(&f, s);
+  aiter.SetValue(log_arc);
+  const ArcClass arc = aiter.Value();
+  EXPECT_EQ(arc.ilabel, 1);
+  EXPECT_EQ(arc.olabel, 1);
+  EXPECT_EQ(arc.weight, WeightClass::One(f.WeightType()));
+
+  // The encoder returns the same error arc as `EncodeMapper` on failure.
+  EncodeMapperClass encoder(f.ArcType(), kEncodeLabels, ENCODE);
+  const ArcClass encoded = encoder(log_arc);
+  EXPECT_EQ(encoded.ilabel, kNoLabel);
+  EXPECT_EQ(encoded.olabel, kNoLabel);
+  EXPECT_EQ(encoded.weight.ToString(), "BadNumber");
+  EXPECT_EQ(encoded.nextstate, s);
+  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 TEST_F(ClassTest, WithReturnValueDefaultInitializesScalarRetval) {

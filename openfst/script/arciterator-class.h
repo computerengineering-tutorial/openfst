@@ -164,7 +164,16 @@ class MutableArcIteratorClassImpl : public MutableArcIteratorImplBase {
     aiter_.SetFlags(flags, mask);
   }
 
-  void SetValue(const ArcClass& ac) final { SetValue(ac.GetArc<Arc>()); }
+  void SetValue(const ArcClass& ac) final {
+    const auto* weight = ac.weight.GetWeight<typename Arc::Weight>();
+    if (weight == nullptr) {
+      FSTERROR() << "MutableArcIteratorClass::SetValue: FST and arc with "
+                    "non-matching weight types: "
+                 << Arc::Weight::Type() << " and " << ac.weight.Type();
+      return;
+    }
+    SetValue(Arc(ac.ilabel, ac.olabel, *weight, ac.nextstate));
+  }
 
   // This is returned by value because it has not yet been constructed, and
   // is likely to participate in return-value optimization.

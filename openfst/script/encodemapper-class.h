@@ -122,9 +122,15 @@ class EncodeMapperClassImpl : public EncodeMapperImplBase {
 
 template <class Arc>
 inline ArcClass EncodeMapperClassImpl<Arc>::operator()(const ArcClass& a) {
-  const Arc arc(a.ilabel, a.olabel,
-                *(a.weight.GetWeight<typename Arc::Weight>()), a.nextstate);
-  return ArcClass(mapper_(arc));
+  using Weight = typename Arc::Weight;
+  const auto* weight = a.weight.GetWeight<Weight>();
+  if (weight == nullptr) {
+    FSTERROR() << "EncodeMapperClass: Mapper and arc with non-matching weight "
+                  "types: "
+               << Weight::Type() << " and " << a.weight.Type();
+    return ArcClass(Arc(kNoLabel, kNoLabel, Weight::NoWeight(), a.nextstate));
+  }
+  return ArcClass(mapper_(Arc(a.ilabel, a.olabel, *weight, a.nextstate)));
 }
 
 class EncodeMapperClass {
