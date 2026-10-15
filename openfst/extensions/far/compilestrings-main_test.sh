@@ -170,3 +170,10 @@ ls "$DAT"/strings[12] > "$FILELIST"
 "$FARBIN"/farextract --filename_suffix=".fst" "$TST"/empty.far
 
 [[ "$("$FARBIN"/farinfo --list_fsts empty.far  | wc -l)" -eq 1 ]] || die
+
+# Unknown symbol missing from symbol table logs the symbol name in the error.
+"$FARBIN"/farcompilestrings --fst_error_fatal=false --token_type=symbol \
+ --symbols="$DAT"/syms.map --entry_type=line --unknown_symbol="not_in_syms" \
+ "$DAT"/strings1-unk "$TST"/unk.far 2>"$TST"/unk.err
+grep -q 'CompileStrings: Label "not_in_syms" missing from symbol table' \
+ "$TST"/unk.err || die

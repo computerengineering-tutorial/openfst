@@ -181,7 +181,7 @@ void CompileStrings(absl::Span<const std::string> sources,
     if (!unknown_symbol.empty()) {
       unknown_label = syms->Find(unknown_symbol);
       if (unknown_label == kNoLabel) {
-        FSTERROR() << "CompileStrings: Label \"" << unknown_label
+        FSTERROR() << "CompileStrings: Label \"" << unknown_symbol
                    << "\" missing from symbol table: " << symbols_source;
         return;
       }
