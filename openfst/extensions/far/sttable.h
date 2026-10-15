@@ -194,8 +194,7 @@ class STTableReader {
       }
     }
     MakeHeap();
-    if (heap_.empty()) return false;
-    return keys_[current_] == key;
+    return !Done() && keys_[current_] == key;
   }
 
   bool Done() const { return error_ || heap_.empty(); }

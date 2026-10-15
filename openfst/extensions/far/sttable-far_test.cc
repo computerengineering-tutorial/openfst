@@ -36,6 +36,7 @@
 #include "openfst/extensions/far/sttable.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/equal.h"
+#include "openfst/lib/fst.h"
 #include "openfst/lib/util.h"
 #include "openfst/compat/status_matchers.h"
 
@@ -302,6 +303,39 @@ TEST_F(FarTest, STTableReaderOverflowNumEntries) {
   EXPECT_FALSE(status_or.ok());
   EXPECT_THAT(status_or.status().message(),
               ::testing::HasSubstr("too small for"));
+}
+
+// An entry that fails to load (here, an FST of an unregistered type) puts the
+// reader in an error state, so `Find` must not report its key as found.
+TEST_F(FarTest, STTableFindUnreadableEntry) {
+  std::ostringstream ostrm;
+  EXPECT_TRUE(WriteType(ostrm, kSTTableMagicNumber));
+  EXPECT_TRUE(WriteType(ostrm, kSTTableFileVersion));
+  std::vector<int64_t> positions;
+  positions.push_back(ostrm.tellp());
+  EXPECT_TRUE(WriteType(ostrm, std::string("1")));
+  EXPECT_TRUE(fst1_->Write(ostrm, FstWriteOptions("1")));
+  positions.push_back(ostrm.tellp());
+  EXPECT_TRUE(WriteType(ostrm, std::string("2")));
+  FstHeader header;
+  header.SetFstType("unregistered");
+  header.SetArcType(LogArc::Type());
+  EXPECT_TRUE(header.Write(ostrm, "2"));
+  EXPECT_TRUE(WriteType(ostrm, positions));
+  EXPECT_TRUE(WriteType(ostrm, static_cast<int64_t>(positions.size())));
+
+  const std::string filename =
+      JoinPath(::testing::TempDir(), "unreadable_entry.far");
+  std::ofstream ofstrm(filename, std::ios_base::binary);
+  ofstrm << ostrm.str();
+  ofstrm.close();
+
+  ABSL_ASSERT_OK_AND_ASSIGN(std::unique_ptr<STTableFarReader<LogArc>> reader,
+                            STTableFarReader<LogArc>::OpenWithStatus(filename));
+  ASSERT_FALSE(reader->Error());
+  EXPECT_FALSE(reader->Find("2"));
+  EXPECT_TRUE(reader->Error());
+  EXPECT_TRUE(reader->Done());
 }
 
 }  // namespace
