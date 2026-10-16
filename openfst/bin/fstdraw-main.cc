@@ -24,12 +24,12 @@
 #include <ostream>
 #include <string>
 
-#include "absl/flags/usage.h"
-#include "openfst/compat/init.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/log/flags.h"
 #include "absl/log/log.h"
+#include "absl/flags/usage.h"
+#include "openfst/compat/init.h"
 #include "openfst/lib/file-util.h"
 #include "openfst/lib/symbol-table.h"
 #include "openfst/script/draw.h"
