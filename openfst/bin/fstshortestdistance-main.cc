@@ -23,12 +23,12 @@
 #include <string>
 #include <vector>
 
-#include "absl/flags/usage.h"
-#include "openfst/compat/init.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/log/flags.h"
 #include "absl/log/log.h"
+#include "absl/flags/usage.h"
+#include "openfst/compat/init.h"
 #include "openfst/lib/queue.h"
 #include "openfst/script/arcfilter-impl.h"
 #include "openfst/script/fst-class.h"
