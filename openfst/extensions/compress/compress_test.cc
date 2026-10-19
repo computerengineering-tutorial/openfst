@@ -19,8 +19,11 @@
 
 #include "openfst/extensions/compress/compress.h"
 
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -299,6 +302,59 @@ TEST_F(CompressTest, DecodeProcessedFstFailsOnSelfReferentialLZCode) {
   std::vector<StateId> input = {2, 1, 1, 10};
   compressor.DecodeProcessedFst(input, &fst, /*unweighted=*/true);
   EXPECT_TRUE(fst.Properties(kError, true) & kError);
+}
+
+TEST_F(CompressTest, ReadWeightRejectsInvalidSizesAndCapsReserve) {
+  Compressor<StdArc> compressor;
+  std::vector<StdArc::Weight> weights;
+
+  for (const int64_t bad_size :
+       {int64_t{-1}, std::numeric_limits<int64_t>::max()}) {
+    std::ostringstream ostrm;
+    WriteType(ostrm, bad_size);
+    std::istringstream istrm(ostrm.str());
+    compressor.ReadWeight(istrm, &weights);
+    EXPECT_FALSE(istrm);
+  }
+
+  // A truncated stream claiming a huge count should cap the upfront reserve to
+  // 1 MiB instead of attempting a multi-gigabyte allocation.
+  std::ostringstream ostrm;
+  const int64_t claimed_size = int64_t{1} << 30;
+  WriteType(ostrm, claimed_size);
+  StdArc::Weight(1.5f).Write(ostrm);
+  std::istringstream istrm(ostrm.str());
+  compressor.ReadWeight(istrm, &weights);
+  EXPECT_FALSE(istrm);
+  EXPECT_EQ(weights.size(), 1);
+  EXPECT_LE(weights.capacity(), (1 << 20) / sizeof(StdArc::Weight));
+}
+
+TEST_F(CompressTest, DecompressFailsOnTruncatedUnweightedFlagAndWeights) {
+  {
+    std::ostringstream ostrm;
+    ASSERT_TRUE(Compress(*unweight_fst_, ostrm));
+    const std::string compressed = ostrm.str();
+    ASSERT_GE(compressed.size(), 1);
+
+    // Truncate the trailing 1-byte `unweighted` flag.
+    std::istringstream istrm(compressed.substr(0, compressed.size() - 1));
+    StdVectorFst output_fst;
+    EXPECT_FALSE(Decompress(istrm, "truncated_unweighted", &output_fst));
+  }
+
+  {
+    std::ostringstream ostrm;
+    ASSERT_TRUE(Compress(*weight_fst_, ostrm));
+    const std::string compressed = ostrm.str();
+    ASSERT_GT(compressed.size(), sizeof(int64_t));
+
+    // Truncate inside the trailing weight tables.
+    std::istringstream istrm(
+        compressed.substr(0, compressed.size() - sizeof(StdArc::Weight)));
+    StdVectorFst output_fst;
+    EXPECT_FALSE(Decompress(istrm, "truncated_weights", &output_fst));
+  }
 }
 
 }  // namespace

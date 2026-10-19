@@ -26,6 +26,7 @@
 #include <ios>
 #include <iostream>
 #include <istream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <ostream>
@@ -772,14 +773,18 @@ void Compressor<Arc>::ReadWeight(std::istream& strm,
   int64_t size = -1;
   Weight weight;
   ReadType(strm, &size);
-  if (!strm || size < 0) {
+  if (!strm || size < 0 ||
+      static_cast<uint64_t>(size) >
+          std::numeric_limits<size_t>::max() / sizeof(Weight)) {
     FSTERROR() << "Compressor::ReadWeight: Read failed or invalid size: "
                << size;
     if (!strm.fail()) strm.setstate(std::ios_base::failbit);
     return;
   }
   output->clear();
-  output->reserve(size);
+  constexpr int64_t kMaxReserve =
+      std::max<int64_t>(1, (1 << 20) / sizeof(Weight));
+  output->reserve(std::min(size, kMaxReserve));
   for (int64_t i = 0; i < size; ++i) {
     if (!weight.Read(strm)) return;
     output->push_back(weight);
@@ -826,11 +831,15 @@ template <class Arc>
   std::vector<StateId> int_code;
   Elias<StateId>::BatchDecode(bool_code, &int_code);
   bool_code.clear();
-  uint8_t unweighted;
-  ReadType(strm, &unweighted);
+  uint8_t unweighted = 0;
+  if (!ReadType(strm, &unweighted)) {
+    FSTERROR() << "Decompress: Unexpected end of input reading unweighted "
+               << "flag: " << source;
+    return false;
+  }
   if (unweighted == 0) {
     ReadWeight(strm, &arc_weight_);
-    ReadWeight(strm, &final_weight_);
+    if (strm) ReadWeight(strm, &final_weight_);
     if (!strm) {
       FSTERROR() << "Decompress: Read failed reading weights: " << source;
       return false;
