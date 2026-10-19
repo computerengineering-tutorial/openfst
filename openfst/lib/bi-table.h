@@ -433,14 +433,14 @@ class ErasableBiTable {
   ErasableBiTable() : first_(0) {}
 
   I FindId(const T& entry, bool insert = true) {
+    if (!insert) {
+      const auto it = entry2id_.find(entry);
+      return it == entry2id_.end() ? -1 : it->second - 1;
+    }
     I& id_ref = entry2id_[entry];
-    if (id_ref == 0) {  // T not found.
-      if (insert) {     // Stores and assigns a new ID.
-        id2entry_.push_back(entry);
-        id_ref = id2entry_.size() + first_;
-      } else {
-        return -1;
-      }
+    if (id_ref == 0) {  // T not found; stores and assigns a new ID.
+      id2entry_.push_back(entry);
+      id_ref = id2entry_.size() + first_;
     }
     return id_ref - 1;  // NB: id_ref = ID + 1.
   }

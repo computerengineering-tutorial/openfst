@@ -19,6 +19,7 @@
 
 #include "openfst/lib/bi-table.h"
 
+#include <cstddef>
 #include <functional>
 #include <string>
 
@@ -189,6 +190,48 @@ TEST(BiTableTest, ErasableBiTableBasic) {
   table.Erase(0);
   EXPECT_EQ(table.Size(), 0);
   EXPECT_EQ(table.FindId("foo", false), -1);
+}
+
+struct CountedEntry {
+  int value = -1;
+  int* copy_count = nullptr;
+
+  CountedEntry() = default;
+  CountedEntry(int v, int* count) : value(v), copy_count(count) {}
+  CountedEntry(const CountedEntry& other)
+      : value(other.value), copy_count(other.copy_count) {
+    if (copy_count != nullptr) ++*copy_count;
+  }
+  // Only copy-construction is tracked.
+  CountedEntry& operator=(const CountedEntry&) = default;
+
+  bool operator==(const CountedEntry& other) const {
+    return value == other.value;
+  }
+};
+
+struct CountedEntryHash {
+  size_t operator()(const CountedEntry& e) const {
+    return absl::HashOf(e.value);
+  }
+};
+
+TEST(BiTableTest, ErasableBiTableFindIdWithoutInsertDoesNotInsert) {
+  ErasableBiTable<int, CountedEntry, CountedEntryHash> table;
+  int copies = 0;
+
+  // Looking up a missing entry with insert=false must not copy it into
+  // entry2id_.
+  EXPECT_EQ(table.FindId(CountedEntry(1, &copies), /*insert=*/false), -1);
+  EXPECT_EQ(copies, 0);
+
+  // Inserting copies into both entry2id_ and id2entry_, and a subsequent
+  // non-inserting lookup finds it without making any more copies.
+  EXPECT_EQ(table.FindId(CountedEntry(1, &copies), /*insert=*/true), 0);
+  const int copies_after_insert = copies;
+  EXPECT_GT(copies_after_insert, 0);
+  EXPECT_EQ(table.FindId(CountedEntry(1, &copies), /*insert=*/false), 0);
+  EXPECT_EQ(copies, copies_after_insert);
 }
 
 }  // namespace
