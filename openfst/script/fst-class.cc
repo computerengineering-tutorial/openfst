@@ -138,7 +138,7 @@ absl_nullable std::unique_ptr<MutableFstClass> MutableFstClass::Read(
       return absl::WrapUnique(
           absl::down_cast<MutableFstClass*>(ifst.release()));
     } else {
-      return std::make_unique<VectorFstClass>(*ifst.release());
+      return std::make_unique<VectorFstClass>(*ifst);
     }
   }
 }

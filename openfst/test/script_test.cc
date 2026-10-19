@@ -28,8 +28,10 @@
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "openfst/lib/arc.h"
+#include "openfst/lib/const-fst.h"
 #include "openfst/lib/determinize.h"
 #include "openfst/lib/encode.h"
 #include "openfst/lib/fst.h"
@@ -136,6 +138,27 @@ TEST_F(ClassTest, MutableFstClassCopy) {
 TEST_F(ClassTest, ReactsCorrectlyToBadFilename) {
   std::unique_ptr<const FstClass> f(FstClass::Read(std::string(kDummyName)));
   ASSERT_EQ(nullptr, f);
+}
+
+// Tests reading a non-mutable FST with convert=true into a MutableFstClass.
+TEST_F(ClassTest, MutableFstClassReadConvert) {
+  StdVectorFst vfst;
+  const auto s0 = vfst.AddState();
+  const auto s1 = vfst.AddState();
+  vfst.SetStart(s0);
+  vfst.AddArc(s0, StdArc(1, 2, StdArc::Weight(0.5f), s1));
+  vfst.SetFinal(s1, StdArc::Weight(1.5f));
+
+  const std::string const_path =
+      absl::StrCat(::testing::TempDir(), "/const.fst");
+  const StdConstFst cfst(vfst);
+  ASSERT_TRUE(cfst.Write(const_path));
+
+  std::unique_ptr<MutableFstClass> converted =
+      MutableFstClass::Read(const_path, /*convert=*/true);
+  ASSERT_NE(converted, nullptr);
+  EXPECT_EQ(converted->FstType(), "vector");
+  EXPECT_TRUE(Equal(*converted, FstClass(vfst)));
 }
 
 // Tests arc and state access and mutation of MutableFstClass.
