@@ -49,6 +49,7 @@ bool ReadLabelTriples(const std::string& source,
   char line[kLineLen];
   size_t nline = 0;
   pairs->clear();
+  assignments->clear();
   while (fstrm.getline(line, kLineLen)) {
     ++nline;
     std::vector<absl::string_view> col =
@@ -58,20 +59,24 @@ bool ReadLabelTriples(const std::string& source,
     if (col.size() != 3) {
       LOG(ERROR) << "ReadLabelTriples: Bad number of columns, "
                  << "file = " << source << ", line = " << nline;
-      return false;
+      goto error;
     }
     bool err;
     const Label i1 = StrToInt64(col[0], source, nline, &err);
-    if (err) return false;
+    if (err) goto error;
     const Label i2 = StrToInt64(col[1], source, nline, &err);
-    if (err) return false;
+    if (err) goto error;
     using Level = Label;
     const Level i3 = StrToInt64(col[2], source, nline, &err);
-    if (err) return false;
+    if (err) goto error;
     pairs->push_back(std::make_pair(i1, i2));
     assignments->push_back(i3);
   }
   return true;
+error:
+  pairs->clear();
+  assignments->clear();
+  return false;
 }
 
 // Returns true on success.

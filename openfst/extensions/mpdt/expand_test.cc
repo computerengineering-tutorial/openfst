@@ -19,6 +19,7 @@
 
 #include "openfst/extensions/mpdt/expand.h"
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -26,10 +27,12 @@
 
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "openfst/extensions/mpdt/read_write_utils.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/equal.h"
+#include "openfst/lib/util.h"
 #include "openfst/lib/vector-fst.h"
 #include "openfst/lib/verify.h"
 
@@ -94,6 +97,39 @@ TEST_F(ExpandTest, MpdtExpand) {
   Expand(*efst1_, parens_, assignments_, &vfst, true, true);
   ASSERT_TRUE(Verify(vfst));
   ASSERT_TRUE(Equal(*efst3_, vfst));
+}
+
+TEST_F(ExpandTest, ReadLabelTriplesClearsOutputsAndRejectsMalformedLines) {
+  const std::string parens_name =
+      JoinPath(std::string("."), kTestDir, "eparen.triples");
+  const auto expected_parens = parens_;
+  const auto expected_assignments = assignments_;
+
+  // Re-reading into already populated vectors must clear both `parens_` and
+  // `assignments_`.
+  ASSERT_TRUE(ReadLabelTriples(parens_name, &parens_, &assignments_));
+  EXPECT_EQ(parens_, expected_parens);
+  EXPECT_EQ(assignments_, expected_assignments);
+
+  const std::string bad_path =
+      JoinPath(::testing::TempDir(), "bad.triples");
+  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  absl::SetFlag(&FLAGS_fst_error_fatal, false);
+  for (const char* bad_contents : {"1 2 1\n3 4\n", "1 2 1\nbad 4 1\n",
+                                   "1 2 1\n3 bad 1\n", "1 2 1\n3 4 bad\n"}) {
+    {
+      std::ofstream ostrm(bad_path);
+      ASSERT_TRUE(ostrm.is_open());
+      ostrm << bad_contents;
+    }
+    parens_ = expected_parens;
+    assignments_ = expected_assignments;
+    EXPECT_FALSE(ReadLabelTriples(bad_path, &parens_, &assignments_))
+        << "bad_contents = " << bad_contents;
+    EXPECT_TRUE(parens_.empty()) << "bad_contents = " << bad_contents;
+    EXPECT_TRUE(assignments_.empty()) << "bad_contents = " << bad_contents;
+  }
+  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 }  // namespace
