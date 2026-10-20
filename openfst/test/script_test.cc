@@ -115,9 +115,20 @@ TEST_F(ClassTest, ArcMutation) {
   // Constructs ArcClass directly.
   f.AddArc(s, ArcClass(50, 50, WeightClass::One(f.WeightType()), 0));
   ASSERT_EQ(2, f.NumArcs(s));
-  // Then, clean it out.
-  f.DeleteArcs(s);
+  // Delete one arc, then clean out the rest.
+  EXPECT_TRUE(f.DeleteArcs(s, 1));
+  ASSERT_EQ(1, f.NumArcs(s));
+  EXPECT_TRUE(f.DeleteArcs(s));
   ASSERT_EQ(0, f.NumArcs(s));
+  // Deleting more arcs than present clears all arcs and epsilon counts.
+  f.AddArc(s, ArcClass(0, 0, WeightClass::One(f.WeightType()), 0));
+  ASSERT_EQ(1, f.NumArcs(s));
+  ASSERT_EQ(1, f.NumInputEpsilons(s));
+  ASSERT_EQ(1, f.NumOutputEpsilons(s));
+  EXPECT_TRUE(f.DeleteArcs(s, 5));
+  ASSERT_EQ(0, f.NumArcs(s));
+  EXPECT_EQ(0, f.NumInputEpsilons(s));
+  EXPECT_EQ(0, f.NumOutputEpsilons(s));
 }
 
 // Tests construction and copying of FstClass.

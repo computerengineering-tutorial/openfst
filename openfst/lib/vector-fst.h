@@ -134,6 +134,10 @@ class VectorState {
   }
 
   void DeleteArcs(size_t n) {
+    if (n >= arcs_.size()) {
+      DeleteArcs();
+      return;
+    }
     for (size_t i = 0; i < n; ++i) {
       if (arcs_.back().ilabel == 0) --niepsilons_;
       if (arcs_.back().olabel == 0) --noepsilons_;
