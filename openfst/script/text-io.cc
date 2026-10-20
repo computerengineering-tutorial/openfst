@@ -17,12 +17,13 @@
 
 #include "openfst/script/text-io.h"
 
-#include <sys/types.h>
-
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -48,6 +49,8 @@ bool ReadPotentials(absl::string_view weight_type, const std::string& source,
   char line[kLineLen];
   size_t nline = 0;
   potentials->clear();
+  std::vector<std::pair<size_t, WeightClass>> entries;
+  size_t max_s = 0;
   while (!istrm.getline(line, kLineLen).fail()) {
     ++nline;
     std::vector<absl::string_view> col =
@@ -58,12 +61,29 @@ bool ReadPotentials(absl::string_view weight_type, const std::string& source,
                  << "file = " << source << ", line = " << nline;
       return false;
     }
-    const ssize_t s = StrToInt64(col[0], source, nline);
-    const WeightClass weight(weight_type, col[1]);
-    while (potentials->size() <= s) {
-      potentials->push_back(WeightClass::Zero(weight_type));
+    bool err = false;
+    const int64_t s = StrToInt64(col[0], source, nline, &err);
+    if (err) {
+      FSTERROR() << "ReadPotentials: Bad state ID = " << col[0]
+                 << ", file = " << source << ", line = " << nline;
+      return false;
     }
-    potentials->back() = weight;
+    if (s < 0) {
+      FSTERROR() << "ReadPotentials: Bad state ID = " << s
+                 << ", file = " << source << ", line = " << nline;
+      return false;
+    }
+    const auto state = static_cast<size_t>(s);
+    entries.emplace_back(state, WeightClass(weight_type, col[1]));
+    max_s = std::max(max_s, state);
+  }
+  if (!entries.empty()) {
+    // State IDs in the input may not be sequential; resize once to max_s + 1
+    // with Zero and populate each state's slot directly.
+    potentials->resize(max_s + 1, WeightClass::Zero(weight_type));
+    for (const auto& [state, weight] : entries) {
+      (*potentials)[state] = weight;
+    }
   }
   return true;
 }

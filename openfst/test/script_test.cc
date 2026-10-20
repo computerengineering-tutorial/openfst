@@ -19,6 +19,7 @@
 
 #include <array>
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -50,6 +51,7 @@
 #include "openfst/script/equal.h"
 #include "openfst/script/fst-class.h"
 #include "openfst/script/stateiterator-class.h"
+#include "openfst/script/text-io.h"
 #include "openfst/script/weight-class.h"
 
 namespace fst {
@@ -431,6 +433,36 @@ TEST(CompileTest, FstCompilerBadIntegersSetError) {
       EXPECT_TRUE(compiler.Fst().Properties(kError, true))
           << "text = " << text << ", nkeep = " << nkeep;
     }
+  }
+  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
+}
+
+TEST(TextIoTest, ReadPotentialsOutOfOrderRepeatedAndInvalidStateIds) {
+  const std::string path = ::testing::TempDir() + "/potentials.txt";
+  {
+    std::ofstream ostrm(path);
+    ASSERT_TRUE(ostrm.is_open());
+    ostrm << "2 1.5\n"
+          << "0 0.5\n"
+          << "2 2.5\n";
+  }
+  std::vector<WeightClass> potentials;
+  ASSERT_TRUE(script::ReadPotentials("tropical", path, &potentials));
+  ASSERT_EQ(potentials.size(), 3);
+  EXPECT_EQ(potentials[0], WeightClass("tropical", "0.5"));
+  EXPECT_EQ(potentials[1], WeightClass::Zero("tropical"));
+  EXPECT_EQ(potentials[2], WeightClass("tropical", "2.5"));
+
+  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  absl::SetFlag(&FLAGS_fst_error_fatal, false);
+  for (const char* bad_line : {"-1 0.5\n", "not_an_int 0.5\n"}) {
+    {
+      std::ofstream ostrm(path);
+      ASSERT_TRUE(ostrm.is_open());
+      ostrm << bad_line;
+    }
+    EXPECT_FALSE(script::ReadPotentials("tropical", path, &potentials))
+        << "bad_line = " << bad_line;
   }
   absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
