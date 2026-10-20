@@ -215,6 +215,36 @@ TEST_F(MatcherTest, ComposeWithRhoMatcher) {
           new TestRhoMatcher(*mfst11_, MATCH_INPUT, kSpecialLabel)));
   ASSERT_TRUE(Verify(cfst3));
   ASSERT_TRUE(Equal(*mfst12_, cfst3));
+
+  // When a RhoMatcher with rho_label == kNoLabel is used in a MATCH_BOTH
+  // composition (paired with a MATCH_INPUT RhoMatcher), Priority(s) must not
+  // call Find(kNoLabel) and mistake an epsilon arc for a rho transition.
+  VectorFst<Arc> eps_fst;
+  eps_fst.AddStates(2);
+  eps_fst.SetStart(0);
+  eps_fst.SetFinal(1, Weight::One());
+  eps_fst.AddArc(0, Arc(0, 0, Weight::One(), 1));
+  ArcSort(&eps_fst, OLabelCompare<Arc>());
+
+  TestRhoMatcher no_rho_matcher(eps_fst, MATCH_OUTPUT, kNoLabel);
+  EXPECT_EQ(no_rho_matcher.Priority(0), 1);
+  no_rho_matcher.SetState(0);
+  EXPECT_FALSE(no_rho_matcher.Find(2));
+
+  VectorFst<Arc> sym_fst;
+  sym_fst.AddStates(2);
+  sym_fst.SetStart(0);
+  sym_fst.SetFinal(1, Weight::One());
+  sym_fst.AddArc(0, Arc(2, 2, Weight::One(), 1));
+  ArcSort(&sym_fst, ILabelCompare<Arc>());
+
+  ComposeFst<Arc> cfst4(
+      eps_fst, sym_fst,
+      ComposeFstOptions<Arc, TestRhoMatcher>(
+          CacheOptions(), new TestRhoMatcher(eps_fst, MATCH_OUTPUT, kNoLabel),
+          new TestRhoMatcher(sym_fst, MATCH_INPUT, kSpecialLabel)));
+  ASSERT_TRUE(Verify(cfst4));
+  EXPECT_TRUE(Equal(ComposeFst<Arc>(eps_fst, sym_fst), cfst4));
 }
 
 TEST_F(MatcherTest, ComposeWithPhiMatcher) {

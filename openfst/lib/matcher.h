@@ -986,14 +986,9 @@ class RhoMatcher : public MatcherBase<typename M::Arc> {
   Weight Final(StateId s) const final { return matcher_->Final(s); }
 
   ssize_t Priority(StateId s) final {
-    state_ = s;
-    matcher_->SetState(s);
-    has_rho_ = matcher_->Find(rho_label_);
-    if (has_rho_) {
-      return kRequirePriority;
-    } else {
-      return matcher_->Priority(s);
-    }
+    SetState(s);
+    if (has_rho_) has_rho_ = matcher_->Find(rho_label_);
+    return has_rho_ ? kRequirePriority : matcher_->Priority(s);
   }
 
   const FST& GetFst() const override { return matcher_->GetFst(); }
