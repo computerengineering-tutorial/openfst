@@ -31,6 +31,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/log/log.h"
 #include "openfst/extensions/linear/linear-fst-data-builder.h"
 #include "openfst/lib/arc.h"
@@ -1274,6 +1275,8 @@ class LinearFstDataReadFailureTest : public Test {
     // nullptr.
     absl::SetFlag(&FLAGS_fst_error_fatal, false);
   }
+
+  absl::FlagSaver fs_;
 
   static std::unique_ptr<StdLinearFstData> ReadFrom(const std::string& buf) {
     std::istringstream in(buf);

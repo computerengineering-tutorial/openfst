@@ -117,6 +117,7 @@ if(OPENFST_BUILD_TESTS)
             ${OPENFST_ALWAYS_LINK_END}
             test_main
             absl::flags
+            absl::flags_reflection
   )
   gtest_discover_tests(
     phi-fst_test
@@ -138,6 +139,7 @@ if(OPENFST_BUILD_TESTS)
             ${OPENFST_ALWAYS_LINK_END}
             test_main
             absl::flags
+            absl::flags_reflection
   )
   gtest_discover_tests(
     rho-fst_test
@@ -159,6 +161,7 @@ if(OPENFST_BUILD_TESTS)
             ${OPENFST_ALWAYS_LINK_END}
             test_main
             absl::flags
+            absl::flags_reflection
   )
   gtest_discover_tests(
     sigma-fst_test

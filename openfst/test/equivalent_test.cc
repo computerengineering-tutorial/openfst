@@ -31,6 +31,7 @@
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -122,6 +123,7 @@ class EquivTest : public testing::Test {
   // Collections of equivalent FSTs. Each collection implements a
   // different regular language.
   std::vector<Name2FstMap> equiv_fsts_;
+  absl::FlagSaver fs_;
 };
 
 // Checks FA equivalence within collections.

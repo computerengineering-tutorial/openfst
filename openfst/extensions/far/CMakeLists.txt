@@ -183,6 +183,7 @@ if(OPENFST_BUILD_TESTS)
               GTest::gmock
               absl::log
               absl::flags
+              absl::flags_reflection
               absl::status
               absl::statusor
     )

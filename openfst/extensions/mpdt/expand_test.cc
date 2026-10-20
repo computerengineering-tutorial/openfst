@@ -28,6 +28,7 @@
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/strings/string_view.h"
 #include "openfst/extensions/mpdt/read_write_utils.h"
 #include "openfst/lib/arc.h"
@@ -73,6 +74,7 @@ class ExpandTest : public testing::Test {
   std::unique_ptr<const VectorFst<Arc>> efst1_, efst2_, efst3_, efst4_;
   std::vector<std::pair<Label, Label>> parens_;
   std::vector<Level> assignments_;
+  absl::FlagSaver fs_;
 };
 
 TEST_F(ExpandTest, MpdtExpandFst) {
@@ -113,7 +115,6 @@ TEST_F(ExpandTest, ReadLabelTriplesClearsOutputsAndRejectsMalformedLines) {
 
   const std::string bad_path =
       JoinPath(::testing::TempDir(), "bad.triples");
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   for (const char* bad_contents : {"1 2 1\n3 4\n", "1 2 1\nbad 4 1\n",
                                    "1 2 1\n3 bad 1\n", "1 2 1\n3 4 bad\n"}) {
@@ -129,7 +130,6 @@ TEST_F(ExpandTest, ReadLabelTriplesClearsOutputsAndRejectsMalformedLines) {
     EXPECT_TRUE(parens_.empty()) << "bad_contents = " << bad_contents;
     EXPECT_TRUE(assignments_.empty()) << "bad_contents = " << bad_contents;
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 }  // namespace

@@ -35,6 +35,7 @@
 #include "gtest/gtest.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -348,11 +349,10 @@ TEST(StrToWeightTest, NegativeWeight) {
 }
 
 TEST(StrToWeightTest, InvalidWeight) {
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   DummyWeight w = StrToWeight<DummyWeight>("not_a_number");
   EXPECT_FLOAT_EQ(w.value, -1.0f);
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 }
 
 }  // namespace

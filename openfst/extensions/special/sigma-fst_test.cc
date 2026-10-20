@@ -27,6 +27,7 @@
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/compose.h"
 #include "openfst/lib/equal.h"
@@ -65,6 +66,7 @@ class SigmaFstTest : public ::testing::Test {
   std::unique_ptr<const StdFst> i1_;
   // Application of h to g where labels matching sigma are not passed through.
   std::unique_ptr<const StdFst> i2_;
+  absl::FlagSaver fs_;
 };
 
 TEST_F(SigmaFstTest, StdSigmaFstTest) {

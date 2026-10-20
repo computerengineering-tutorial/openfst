@@ -27,6 +27,7 @@
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/compose.h"
 #include "openfst/lib/equal.h"
@@ -68,6 +69,7 @@ class RhoFstTest : public ::testing::Test {
   std::unique_ptr<const StdFst> f1_;
   // Application of e to d2 where labels matching rho are not passed through..
   std::unique_ptr<const StdFst> f2_;
+  absl::FlagSaver fs_;
 };
 
 TEST_F(RhoFstTest, StdRhoFstTest) {

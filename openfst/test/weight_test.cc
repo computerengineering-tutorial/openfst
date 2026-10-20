@@ -29,6 +29,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/log/flags.h"
 #include "openfst/compat/seed_sequences.h"
 #include "absl/random/bit_gen_ref.h"
@@ -302,7 +303,7 @@ void TestFloatEqualityIsReflexive() {
 
 void TestStringWeightRead() {
   using Weight = StringWeight<int>;
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
 
   // Test unreasonable size values: negative size.
@@ -325,10 +326,10 @@ void TestStringWeightRead() {
     w.Read(strm);
     EXPECT_EQ(0, w.Size());
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 }
 
 TEST(WeightTest, RunTest) {
+  const absl::FlagSaver fs;
   absl::BitGen bit_gen(
       fst::MakeTaggedSeedSeq("WEIGHT_TEST"));
   TestTemplatedWeights<float>(bit_gen, absl::GetFlag(FLAGS_repeat));
@@ -560,7 +561,7 @@ TEST(WeightTest, RunTest) {
 }
 
 TEST(WeightReadTest, ReadNegativeSizeFails) {
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   std::ostringstream os;
   constexpr int32_t bad_size = -5;
@@ -595,11 +596,10 @@ TEST(WeightReadTest, ReadNegativeSizeFails) {
     w.Read(is);
     EXPECT_TRUE(is.fail());
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 }
 
 TEST(WeightReadTest, ReadOversizedSizeFails) {
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   std::ostringstream os;
   // Minimum 4 bytes per label/weight.
@@ -635,7 +635,6 @@ TEST(WeightReadTest, ReadOversizedSizeFails) {
     w.Read(is);
     EXPECT_TRUE(is.fail());
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 }
 
 TEST(CompositeWeightTest, SpanInStreamCompositeWeightReader) {
@@ -711,7 +710,7 @@ TEST(CompositeWeightTest, UnionWeightStreamRead) {
 // which sets badbit on the stream; each composite `operator>>` then stops
 // before storing the unparsed element.
 TEST(CompositeWeightTest, StreamReadInvalidInput) {
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
 
   using PW = PairWeight<TropicalWeight, TropicalWeight>;
@@ -784,8 +783,6 @@ TEST(CompositeWeightTest, StreamReadInvalidInput) {
     EXPECT_FALSE(is.bad());
     EXPECT_FALSE(StrToWeight<UW>("").Member());
   }
-
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 }
 
 // Exercises both early returns after reading a `SparseTupleWeight` key: a
@@ -803,7 +800,7 @@ TEST(CompositeWeightTest, SparseTupleWeightStreamReadKeyWithoutValue) {
     EXPECT_EQ(stw.Value(1), TropicalWeight(2.0));
   }
 
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   for (absl::string_view input : {
            "0.0,1",          // Only key without a value.
@@ -816,7 +813,6 @@ TEST(CompositeWeightTest, SparseTupleWeightStreamReadKeyWithoutValue) {
     is >> stw;
     EXPECT_TRUE(is.bad()) << "input=" << input;
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 }
 
 TEST(SetWeightTest, MultiElementVectorOperations) {
@@ -900,12 +896,11 @@ TEST(WeightStringifyTest, AbslStringifyAndWeightToStr) {
   EXPECT_EQ(StrToWeight<TropicalWeight>(WeightToStr(TropicalWeight::One())),
             TropicalWeight::One());
 
-  const bool old_fst_error_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   const TropicalWeight no_w =
       StrToWeight<TropicalWeight>(WeightToStr(TropicalWeight::NoWeight()));
   EXPECT_FALSE(no_w.Member());
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fst_error_fatal);
 
   // Test fallback in WeightToStr for non-AbslStringify composite weights.
   StringWeight<int> sw;

@@ -100,6 +100,8 @@ if(OPENFST_BUILD_TESTS)
             fst
             ${OPENFST_ALWAYS_LINK_END}
             test_main
+            absl::flags
+            absl::flags_reflection
             absl::log
   )
   gtest_discover_tests(

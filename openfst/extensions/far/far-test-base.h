@@ -25,6 +25,7 @@
 
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
+#include "absl/flags/reflection.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/fst.h"
 
@@ -48,6 +49,7 @@ class FarTest : public testing::Test {
   std::unique_ptr<Fst<LogArc>> fst1_;
   std::unique_ptr<Fst<LogArc>> fst2_;
   std::unique_ptr<Fst<LogArc>> fst3_;
+  absl::FlagSaver fs_;
 };
 
 }  // namespace fst

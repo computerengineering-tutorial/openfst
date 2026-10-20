@@ -27,6 +27,7 @@
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/compose.h"
 #include "openfst/lib/equal.h"
@@ -65,6 +66,7 @@ class PhiFstTest : public ::testing::Test {
   std::unique_ptr<const StdFst> c1_;
   std::unique_ptr<const StdFst> c2_;
   std::unique_ptr<const StdFst> c3_;
+  absl::FlagSaver fs_;
 };
 
 TEST_F(PhiFstTest, StdPhiFstTest) {

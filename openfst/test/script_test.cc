@@ -28,6 +28,7 @@
 
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -84,6 +85,8 @@ class ClassTest : public testing::Test {
     // Makes FSTERROR death tests actually fatal.
     absl::SetFlag(&FLAGS_fst_error_fatal, true);
   }
+
+  absl::FlagSaver fs_;
 };
 
 // Test the number-of-states accessors,
@@ -306,7 +309,6 @@ TEST_F(ClassTest, WeightClassOperations) {
     ostrm << empty;
     EXPECT_EQ(ostrm.str(), "none");
   }
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   for (const WeightClass& invalid :
        {WeightClass(kDummyName, "1"),
@@ -318,7 +320,6 @@ TEST_F(ClassTest, WeightClassOperations) {
     ostrm << invalid;
     EXPECT_EQ(ostrm.str(), "none");
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 TEST_F(ClassTest, EncodeMapperClassOperations) {
@@ -356,7 +357,6 @@ TEST_F(ClassTest, EncodeMapperClassOperations) {
 // Applying an `ArcClass` whose weight type does not match the FST or encoder
 // is an error rather than a dereference of a null weight.
 TEST_F(ClassTest, ArcClassWeightTypeMismatch) {
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   StdVectorFst vfst;
   MutableFstClass f(vfst);
@@ -379,7 +379,6 @@ TEST_F(ClassTest, ArcClassWeightTypeMismatch) {
   EXPECT_EQ(encoded.olabel, kNoLabel);
   EXPECT_EQ(encoded.weight.ToString(), "BadNumber");
   EXPECT_EQ(encoded.nextstate, s);
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 TEST_F(ClassTest, WithReturnValueDefaultInitializesScalarRetval) {
@@ -390,12 +389,10 @@ TEST_F(ClassTest, WithReturnValueDefaultInitializesScalarRetval) {
   // When `Apply` fails to find an operation for an unregistered arc type in
   // non-fatal mode, `Equal` must return `false` rather than an uninitialized
   // `bool`.
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   const VectorFst<GallicArc<StdArc>> unregistered_fst;
   const FstClass unregistered_fstc(unregistered_fst);
   EXPECT_FALSE(Equal(unregistered_fstc, unregistered_fstc));
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 TEST(CompileTest, FstCompilerCompilesTextWithWeights) {
@@ -416,7 +413,7 @@ TEST(CompileTest, FstCompilerCompilesTextWithWeights) {
 }
 
 TEST(CompileTest, FstCompilerBadWeightSetsError) {
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   const std::string text = "0 1 1 2 not_a_weight\n";
   std::istringstream istrm(text);
@@ -426,11 +423,10 @@ TEST(CompileTest, FstCompilerBadWeightSetsError) {
                                /*nkeep=*/false);
   const auto& fst = compiler.Fst();
   EXPECT_TRUE(fst.Properties(kError, true));
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 TEST(CompileTest, FstCompilerBadIntegersSetError) {
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   for (const bool nkeep : {false, true}) {
     for (const char* text :
@@ -445,7 +441,6 @@ TEST(CompileTest, FstCompilerBadIntegersSetError) {
           << "text = " << text << ", nkeep = " << nkeep;
     }
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 TEST(TextIoTest, ReadPotentialsOutOfOrderRepeatedAndInvalidStateIds) {
@@ -464,7 +459,7 @@ TEST(TextIoTest, ReadPotentialsOutOfOrderRepeatedAndInvalidStateIds) {
   EXPECT_EQ(potentials[1], WeightClass::Zero("tropical"));
   EXPECT_EQ(potentials[2], WeightClass("tropical", "2.5"));
 
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   for (const char* bad_line : {"-1 0.5\n", "not_an_int 0.5\n"}) {
     {
@@ -475,7 +470,6 @@ TEST(TextIoTest, ReadPotentialsOutOfOrderRepeatedAndInvalidStateIds) {
     EXPECT_FALSE(script::ReadPotentials("tropical", path, &potentials))
         << "bad_line = " << bad_line;
   }
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 }  // namespace

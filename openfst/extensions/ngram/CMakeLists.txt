@@ -90,6 +90,7 @@ if(OPENFST_BUILD_TESTS)
               GTest::gtest
               GTest::gmock
               absl::flags
+              absl::flags_reflection
               absl::log
               absl::die_if_null
               absl::check

@@ -153,6 +153,7 @@ foreach(TEST_NAME ${TESTS})
             GTest::gmock
             absl::flags
             absl::flags_parse
+            absl::flags_reflection
             absl::flags_usage
             absl::log
             absl::status

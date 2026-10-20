@@ -29,6 +29,7 @@
 #include "gtest/gtest.h"
 #include "absl/base/no_destructor.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/log/die_if_null.h"
 #include "openfst/lib/arc-map.h"
 #include "openfst/lib/arc.h"
@@ -65,6 +66,7 @@ TEST(NGramFstTest, EmptyFst) {
 }
 
 TEST(NGramFstDeathTest, FailsOnEmptyFst) {
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   const VectorFst<StdArc> fst;
   NGramFst<StdArc> ngram_fst(fst);

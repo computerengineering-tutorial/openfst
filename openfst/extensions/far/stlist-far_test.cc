@@ -136,7 +136,6 @@ TEST_F(FarTest, STListEmptyFar) {
 }
 
 TEST_F(FarTest, STListUnwritableFar) {
-  const bool prev_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   std::unique_ptr<STListFarWriter<LogArc>> writer(
       STListFarWriter<LogArc>::Create(JoinPath(
@@ -144,7 +143,6 @@ TEST_F(FarTest, STListUnwritableFar) {
   EXPECT_TRUE(writer->Error());
   writer->Add("1", *fst1_);
   EXPECT_TRUE(writer->Error());
-  absl::SetFlag(&FLAGS_fst_error_fatal, prev_fatal);
 }
 
 }  // namespace

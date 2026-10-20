@@ -25,6 +25,7 @@
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/log/check.h"
 #include "absl/random/random.h"
 #include "benchmark/benchmark.h"
@@ -253,6 +254,9 @@ class CompactorTest : public ::testing::Test {
     // Force Fst::Properties to check cached vs computed properties.
     absl::SetFlag(&FLAGS_fst_verify_properties, true);
   }
+
+ private:
+  absl::FlagSaver fs_;
 };
 
 using FstType =

@@ -27,6 +27,7 @@
 
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/types/span.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/compact-fst.h"
@@ -184,7 +185,7 @@ TEST(CompactLimitsTest, SmallUnsignedFixedSizeOverflowTest) {
   }
   vfst.SetFinal(255, StdArc::Weight::One());
 
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   CompactStringFst<StdArc, uint8_t> cfst_from_fst(vfst);
   EXPECT_EQ(cfst_from_fst.Properties(kError, false), kError);
@@ -193,7 +194,6 @@ TEST(CompactLimitsTest, SmallUnsignedFixedSizeOverflowTest) {
   auto cfst_from_iters =
       MakeCompactStringFst<StdArc, uint8_t>(labels.begin(), labels.end());
   EXPECT_EQ(cfst_from_iters.Properties(kError, false), kError);
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 
   // Read with nstates = 256 (ncompacts = 256 > kMaxArcs = 255) must fail.
   FstHeader hdr;
@@ -220,7 +220,7 @@ TEST(CompactLimitsTest, SmallUnsignedVariableSizeOverflowTest) {
     vfst.AddArc(0, StdArc(i + 1, i + 1, StdArc::Weight::One(), 0));
   }
 
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   CompactAcceptorFst<StdArc, uint8_t> cfst_from_fst(vfst);
   EXPECT_EQ(cfst_from_fst.Properties(kError, false), kError);
@@ -229,7 +229,6 @@ TEST(CompactLimitsTest, SmallUnsignedVariableSizeOverflowTest) {
       VarStore8::kMaxArcs + 1, {{kNoLabel, kNoLabel}, kNoStateId});
   VarStore8 store_from_iters(elements.begin(), elements.end(), VarCompactor());
   EXPECT_TRUE(store_from_iters.Error());
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 }
 
 // ConstFst limits tests.
@@ -299,11 +298,10 @@ TEST(ConstLimitsTest, SmallUnsignedOverflowTest) {
     vfst.AddArc(0, StdArc(i + 1, i + 1, StdArc::Weight::One(), 0));
   }
 
-  const bool old_fatal = absl::GetFlag(FLAGS_fst_error_fatal);
+  const absl::FlagSaver fs;
   absl::SetFlag(&FLAGS_fst_error_fatal, false);
   ConstFst<StdArc, uint8_t> cfst(vfst);
   EXPECT_EQ(cfst.Properties(kError, false), kError);
-  absl::SetFlag(&FLAGS_fst_error_fatal, old_fatal);
 
   FstHeader hdr;
   hdr.SetFstType("const8");
