@@ -56,8 +56,18 @@ class RhoFstMatcherData {
                                         const FstReadOptions& read) {
     auto data = std::make_unique<RhoFstMatcherData<Label>>();
     ReadType(istrm, &data->rho_label_);
-    int32_t rewrite_mode;
+    int32_t rewrite_mode = MATCHER_REWRITE_AUTO;
     ReadType(istrm, &rewrite_mode);
+    if (!istrm) {
+      LOG(ERROR) << "RhoFstMatcherData::Read: Read failed: " << read.source;
+      return nullptr;
+    }
+    if (rewrite_mode < MATCHER_REWRITE_AUTO ||
+        rewrite_mode > MATCHER_REWRITE_NEVER) {
+      LOG(ERROR) << "RhoFstMatcherData::Read: Bad rewrite mode: "
+                 << rewrite_mode;
+      return nullptr;
+    }
     data->rewrite_mode_ = static_cast<MatcherRewriteMode>(rewrite_mode);
     return data.release();
   }

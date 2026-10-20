@@ -17,15 +17,21 @@
 
 #include "openfst/extensions/special/rho-fst.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
 #include "absl/flags/flag.h"
+#include "openfst/lib/arc.h"
 #include "openfst/lib/compose.h"
 #include "openfst/lib/equal.h"
 #include "openfst/lib/fst.h"
+#include "openfst/lib/matcher.h"
 #include "openfst/lib/vector-fst.h"
 #include "openfst/lib/verify.h"
 
@@ -90,6 +96,42 @@ TEST_F(RhoFstTest, StdInputRhoFstTest) {
   absl::SetFlag(&FLAGS_rho_fst_rewrite_mode, "always");
   EXPECT_TRUE(ComposeTest(*d1_, StdInputRhoFst(*e_), *f1_));
   EXPECT_TRUE(ComposeTest(*d2_, StdInputRhoFst(*e_), *d2_));
+}
+
+TEST_F(RhoFstTest, MatcherDataReadRejectsTruncatedAndInvalidRewriteMode) {
+  using MatcherData = internal::RhoFstMatcherData<StdArc::Label>;
+  const MatcherData orig(/*rho_label=*/2, MATCHER_REWRITE_NEVER);
+  std::ostringstream ostrm;
+  ASSERT_TRUE(orig.Write(ostrm, FstWriteOptions()));
+  const std::string serialized = ostrm.str();
+  ASSERT_GE(serialized.size(), sizeof(int32_t));
+
+  {
+    std::istringstream istrm(serialized);
+    std::unique_ptr<MatcherData> read_data(
+        MatcherData::Read(istrm, FstReadOptions()));
+    ASSERT_NE(read_data, nullptr);
+    EXPECT_EQ(read_data->RhoLabel(), 2);
+    EXPECT_EQ(read_data->RewriteMode(), MATCHER_REWRITE_NEVER);
+  }
+
+  for (size_t cut = 0; cut < serialized.size(); ++cut) {
+    std::istringstream istrm(serialized.substr(0, cut));
+    std::unique_ptr<MatcherData> read_data(
+        MatcherData::Read(istrm, FstReadOptions()));
+    EXPECT_EQ(read_data, nullptr) << "cut = " << cut;
+  }
+
+  for (const int32_t bad_mode :
+       {int32_t{-1}, static_cast<int32_t>(MATCHER_REWRITE_NEVER) + 1}) {
+    std::string corrupt = serialized;
+    std::memcpy(&corrupt[corrupt.size() - sizeof(int32_t)], &bad_mode,
+                sizeof(int32_t));
+    std::istringstream istrm(corrupt);
+    std::unique_ptr<MatcherData> read_data(
+        MatcherData::Read(istrm, FstReadOptions()));
+    EXPECT_EQ(read_data, nullptr) << "bad_mode = " << bad_mode;
+  }
 }
 
 }  // namespace

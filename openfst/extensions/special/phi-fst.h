@@ -63,8 +63,18 @@ class PhiFstMatcherData {
     auto data = std::make_unique<PhiFstMatcherData<Label>>();
     ReadType(istrm, &data->phi_label_);
     ReadType(istrm, &data->phi_loop_);
-    int32_t rewrite_mode;
+    int32_t rewrite_mode = MATCHER_REWRITE_AUTO;
     ReadType(istrm, &rewrite_mode);
+    if (!istrm) {
+      LOG(ERROR) << "PhiFstMatcherData::Read: Read failed: " << read.source;
+      return nullptr;
+    }
+    if (rewrite_mode < MATCHER_REWRITE_AUTO ||
+        rewrite_mode > MATCHER_REWRITE_NEVER) {
+      LOG(ERROR) << "PhiFstMatcherData::Read: Bad rewrite mode: "
+                 << rewrite_mode;
+      return nullptr;
+    }
     data->rewrite_mode_ = static_cast<MatcherRewriteMode>(rewrite_mode);
     return data.release();
   }

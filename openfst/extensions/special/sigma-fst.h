@@ -56,8 +56,18 @@ class SigmaFstMatcherData {
                                           const FstReadOptions& read) {
     auto data = std::make_unique<SigmaFstMatcherData<Label>>();
     ReadType(istrm, &data->sigma_label_);
-    int32_t rewrite_mode;
+    int32_t rewrite_mode = MATCHER_REWRITE_AUTO;
     ReadType(istrm, &rewrite_mode);
+    if (!istrm) {
+      LOG(ERROR) << "SigmaFstMatcherData::Read: Read failed: " << read.source;
+      return nullptr;
+    }
+    if (rewrite_mode < MATCHER_REWRITE_AUTO ||
+        rewrite_mode > MATCHER_REWRITE_NEVER) {
+      LOG(ERROR) << "SigmaFstMatcherData::Read: Bad rewrite mode: "
+                 << rewrite_mode;
+      return nullptr;
+    }
     data->rewrite_mode_ = static_cast<MatcherRewriteMode>(rewrite_mode);
     return data.release();
   }
