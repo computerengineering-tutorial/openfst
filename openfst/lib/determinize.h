@@ -782,14 +782,16 @@ class DeterminizeFstImpl : public DeterminizeFstImplBase<Arc> {
         delta_(opts.delta),
         subsequential_label_(opts.subsequential_label),
         increment_subsequential_label_(opts.increment_subsequential_label) {
-    if (opts.state_table) {
+    // Takes ownership of filter and state_table.
+    std::unique_ptr<Filter> filter(opts.filter);
+    std::unique_ptr<StateTable> state_table(opts.state_table);
+    if (state_table) {
       FSTERROR() << "DeterminizeFst: "
                  << "A state table can not be passed with transducer input";
       SetProperties(kError, kError);
       return;
     }
-    // Takes ownership of filter.
-    Init(GetFst(), absl::WrapUnique(opts.filter));
+    Init(GetFst(), std::move(filter));
   }
 
   DeterminizeFstImpl(const DeterminizeFstImpl& impl)
@@ -797,7 +799,9 @@ class DeterminizeFstImpl : public DeterminizeFstImplBase<Arc> {
         delta_(impl.delta_),
         subsequential_label_(impl.subsequential_label_),
         increment_subsequential_label_(impl.increment_subsequential_label_) {
-    Init(GetFst(), nullptr);
+    if (impl.from_fst_) {
+      Init(GetFst(), nullptr);
+    }
   }
 
   DeterminizeFstImpl* Copy() const override {
@@ -808,21 +812,28 @@ class DeterminizeFstImpl : public DeterminizeFstImplBase<Arc> {
 
   // Sets error if found, and returns other FST impl properties.
   uint64_t Properties(uint64_t mask) const override {
-    if ((mask & kError) && (GetFst().Properties(kError, false) ||
-                            from_fst_->Properties(kError, false))) {
+    if ((mask & kError) &&
+        (GetFst().Properties(kError, false) ||
+         (from_fst_ && from_fst_->Properties(kError, false)))) {
       SetProperties(kError, kError);
     }
     return FstImpl<Arc>::Properties(mask);
   }
 
-  StateId ComputeStart() override { return from_fst_->Start(); }
+  StateId ComputeStart() override {
+    return from_fst_ ? from_fst_->Start() : kNoStateId;
+  }
 
-  Weight ComputeFinal(StateId s) override { return from_fst_->Final(s); }
+  Weight ComputeFinal(StateId s) override {
+    return from_fst_ ? from_fst_->Final(s) : Weight::Zero();
+  }
 
   void Expand(StateId s) override {
-    for (ArcIterator<FromFst> aiter(*from_fst_, s); !aiter.Done();
-         aiter.Next()) {
-      CacheImpl<Arc>::PushArc(s, aiter.Value());
+    if (from_fst_) {
+      for (ArcIterator<FromFst> aiter(*from_fst_, s); !aiter.Done();
+           aiter.Next()) {
+        CacheImpl<Arc>::PushArc(s, aiter.Value());
+      }
     }
     CacheImpl<Arc>::SetArcs(s);
   }

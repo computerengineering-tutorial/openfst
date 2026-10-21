@@ -24,10 +24,13 @@
 
 #include "openfst/compat/file_path.h"
 #include "gtest/gtest.h"
+#include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/equal.h"
 #include "openfst/lib/fst.h"
 #include "openfst/lib/properties.h"
+#include "openfst/lib/util.h"
 #include "openfst/lib/vector-fst.h"
 #include "openfst/lib/verify.h"
 #include "openfst/lib/weight.h"
@@ -124,6 +127,32 @@ TEST_F(DeterminizeTest, TransducerDeterminize) {
   ASSERT_TRUE(ofst3.Properties(kIDeterministic, true));
   ASSERT_TRUE(ofst3.Properties(kNoIEpsilons, true));
   ASSERT_TRUE(Equal(*dfst9_, ofst3));
+}
+
+TEST_F(DeterminizeTest, TransducerDeterminizeWithStateTableError) {
+  absl::FlagSaver fs;
+  absl::SetFlag(&FLAGS_fst_error_fatal, false);
+
+  using Filter = DefaultDeterminizeFilter<Arc>;
+  using StateTable =
+      DefaultDeterminizeStateTable<Arc, typename Filter::FilterState>;
+  DeterminizeFstOptions<Arc> opts;
+  opts.filter = new Filter(*dfst3_);
+  opts.state_table = new StateTable();
+
+  DeterminizeFst<Arc> ofst(*dfst3_, opts);
+  EXPECT_EQ(ofst.Properties(kError, false), kError);
+  EXPECT_EQ(ofst.Properties(kError, true), kError);
+  EXPECT_EQ(ofst.Start(), kNoStateId);
+
+  for (const bool safe : {false, true}) {
+    DeterminizeFst<Arc> cfst(ofst, safe);
+    EXPECT_EQ(cfst.Properties(kError, false), kError);
+    EXPECT_EQ(cfst.Start(), kNoStateId);
+  }
+
+  VectorFst<Arc> vfst(ofst);
+  EXPECT_EQ(vfst.Properties(kError, false), kError);
 }
 
 TEST_F(DeterminizeTest, PrunedDeterminize) {
