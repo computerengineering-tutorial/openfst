@@ -127,7 +127,7 @@ class CyclicMinimizer {
   using ClassId = typename Arc::StateId;
   using Weight = typename Arc::Weight;
   using RevArc = ReverseArc<Arc>;
-  using RevArcIter = ArcIterator<Fst<RevArc>>;
+  using RevArcIter = ArcIterator<VectorFst<RevArc>>;
 
   explicit CyclicMinimizer(const ExpandedFst<Arc>& fst) {
     Initialize(fst);
@@ -237,8 +237,6 @@ class CyclicMinimizer {
     P_.Initialize(Tr_.NumStates() - 1);
     // Prepares initial partition.
     PrePartition(fst);
-    // Allocates arc iterator queue.
-    aiter_queue_ = std::make_unique<ArcIterQueue>();
   }
   // Partitions all classes with destination C.
   void Split(ClassId C) {
@@ -247,20 +245,15 @@ class CyclicMinimizer {
     for (PartitionIterator<StateId> siter(P_, C); !siter.Done(); siter.Next()) {
       const auto s = siter.Value();
       if (Tr_.NumArcs(s + 1)) {
-        aiter_queue_->push(RevArcIter(Tr_, s + 1));
+        aiter_queue_.push(RevArcIter(Tr_, s + 1));
       }
     }
     // Now pops arc iterator from queue, splits entering equivalence class, and
     // re-inserts updated iterator into queue.
     Label prev_label = -1;
-    while (!aiter_queue_->empty()) {
-      // NB: There is no way to "move" out of a std::priority_queue given that
-      // the `top` accessor is a const ref. We const-cast to move the
-      // element out of the priority queue. This is fine and doesn't cause an
-      // issue with the invariants of the pqueue since we immediately pop after.
-      RevArcIter aiter =
-          std::move(const_cast<RevArcIter&>(aiter_queue_->top()));
-      aiter_queue_->pop();
+    while (!aiter_queue_.empty()) {
+      RevArcIter aiter = aiter_queue_.top();
+      aiter_queue_.pop();
       if (aiter.Done()) continue;
       const auto& arc = aiter.Value();
       auto from_state = aiter.Value().nextstate - 1;
@@ -270,7 +263,7 @@ class CyclicMinimizer {
       if (P_.ClassSize(from_class) > 1) P_.SplitOn(from_state);
       prev_label = from_label;
       aiter.Next();
-      if (!aiter.Done()) aiter_queue_->push(std::move(aiter));
+      if (!aiter.Done()) aiter_queue_.push(aiter);
     }
     P_.FinalizeSplit(&L_);
   }
@@ -294,7 +287,7 @@ class CyclicMinimizer {
   VectorFst<RevArc> Tr_;
   // Priority queue of open arc iterators for all states in the splitter
   // equivalence class.
-  std::unique_ptr<ArcIterQueue> aiter_queue_;
+  ArcIterQueue aiter_queue_;
 };
 
 // Computes equivalence classes for acyclic FST.
