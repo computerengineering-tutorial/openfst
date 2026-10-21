@@ -33,9 +33,11 @@
 #include "openfst/lib/compact-fst.h"
 #include "openfst/lib/fst.h"
 #include "openfst/lib/icu.h"
+#include "openfst/lib/properties.h"
 #include "openfst/lib/shortest-distance.h"
 #include "openfst/lib/symbol-table.h"
 #include "openfst/lib/vector-fst.h"
+#include "openfst/lib/verify.h"
 #include "openfst/script/compile-impl.h"
 
 namespace fst {
@@ -391,6 +393,26 @@ TEST(StringTest, EmptySeparator) {
   EXPECT_TRUE(LabelsToString<int32_t>(labels, &str, TokenType::SYMBOL,
                                       /*syms=*/nullptr, /*sep=*/""));
   EXPECT_EQ(str, "12");
+}
+
+TEST(StringTest, CompiledStringProperties) {
+  const StdStringCompiler sc(TokenType::BYTE);
+
+  StdVectorFst unweighted_fst;
+  ASSERT_TRUE(sc("abc", &unweighted_fst));
+  EXPECT_TRUE(Verify(unweighted_fst));
+  EXPECT_EQ(
+      unweighted_fst.Properties(kCompiledStringProperties | kWeighted, false),
+      kCompiledStringProperties);
+
+  StdVectorFst weighted_fst;
+  ASSERT_TRUE(sc("abc", &weighted_fst, StdArc::Weight(2.5F)));
+  EXPECT_TRUE(Verify(weighted_fst));
+  static constexpr uint64_t kExpectedWeightedProps =
+      (kCompiledStringProperties & ~kUnweighted) | kWeighted;
+  EXPECT_EQ(
+      weighted_fst.Properties(kCompiledStringProperties | kWeighted, false),
+      kExpectedWeightedProps);
 }
 
 }  // namespace

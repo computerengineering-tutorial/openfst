@@ -222,7 +222,8 @@ class StringCompiler {
       ++state;
     }
     fst->SetFinal(state, std::move(weight));
-    fst->SetProperties(kCompiledStringProperties, kCompiledStringProperties);
+    static constexpr auto props = kCompiledStringProperties & ~kUnweighted;
+    fst->SetProperties(props, props);
   }
 
   template <class Unsigned>
