@@ -266,6 +266,11 @@ namespace internal {
 
 // MutableFst<A> case: abstract methods.
 template <class Arc>
+inline typename Arc::StateId NumStates(const MutableFst<Arc>& fst) {
+  return fst.NumStates();
+}
+
+template <class Arc>
 inline typename Arc::Weight Final(const MutableFst<Arc>& fst,
                                   typename Arc::StateId s) {
   return fst.Final(s);

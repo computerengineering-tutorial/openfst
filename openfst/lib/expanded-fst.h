@@ -106,7 +106,18 @@ class ExpandedFst : public Fst<A> {
 
 namespace internal {
 
+// General case, requires non-abstract, 'final' methods. Use for inlining.
+template <class F>
+inline typename F::Arc::StateId NumStates(const F& fst) {
+  return fst.F::NumStates();
+}
+
 //  ExpandedFst<A> case - abstract methods.
+template <class Arc>
+inline typename Arc::StateId NumStates(const ExpandedFst<Arc>& fst) {
+  return fst.NumStates();
+}
+
 template <class Arc>
 inline typename Arc::Weight Final(const ExpandedFst<Arc>& fst,
                                   typename Arc::StateId s) {

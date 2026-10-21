@@ -123,6 +123,7 @@ class FstTester {
   template <class G>
   void TestExpanded(const G& fst) const {
     EXPECT_EQ(fst.NumStates(), num_states_);
+    EXPECT_EQ(internal::NumStates(fst), num_states_);
     StateId ns = 0;
     for (StateIterator<G> siter(fst); !siter.Done(); siter.Next()) {
       ++ns;
