@@ -72,7 +72,6 @@ class MPdtParenFilter {
         paren_id_(-1) {
     if (parens) {
       for (const auto& pair : *parens) {
-        parens_.push_back(pair);
         GetMatcher1()->AddOpenParen(pair.first);
         GetMatcher2()->AddOpenParen(pair.first);
         if (!expand_) {
@@ -86,11 +85,12 @@ class MPdtParenFilter {
   MPdtParenFilter(const MPdtParenFilter& filter, bool safe = false)
       : filter_(filter.filter_, safe),
         parens_(filter.parens_),
+        assignments_(filter.assignments_),
         expand_(filter.expand_),
         keep_parens_(filter.keep_parens_),
         fs_(FilterState::NoState()),
-        stack_(filter.parens_, filter.assignments_),
-        paren_id_(-1) {}
+        stack_(filter.stack_),
+        paren_id_(filter.paren_id_) {}
 
   FilterState Start() const {
     return FilterState(filter_.Start(), FilterState2(0));

@@ -30,7 +30,11 @@
 #include "openfst/extensions/mpdt/read_write_utils.h"
 #include "openfst/extensions/pdt/compose.h"
 #include "openfst/lib/arc.h"
+#include "openfst/lib/compose.h"
+#include "openfst/lib/connect.h"
 #include "openfst/lib/equal.h"
+#include "openfst/lib/fst.h"
+#include "openfst/lib/properties.h"
 #include "openfst/lib/vector-fst.h"
 #include "openfst/lib/verify.h"
 
@@ -96,6 +100,38 @@ TEST_F(ComposeTest, FilteredMpdtCompose) {
   VectorFst<Arc> vfst2;
 
   Compose(*cfst2_, *cfst1_, parens_, assignments_, &vfst2, opts);
+  ASSERT_TRUE(Verify(vfst2));
+  ASSERT_TRUE(Equal(*cfst3_, vfst2));
+}
+
+TEST_F(ComposeTest, FilteredMpdtComposeFstSafeCopy) {
+  MPdtComposeFstOptions<Arc, true> copts(*cfst1_, parens_, assignments_,
+                                         *cfst2_, /*expand=*/true,
+                                         /*keep_parens=*/true);
+  ComposeFst<Arc> composed(*cfst1_, *cfst2_, copts);
+
+  // Safe copy before any state expansion.
+  std::unique_ptr<ComposeFst<Arc>> copy_unexpanded(composed.Copy(true));
+  ASSERT_FALSE(copy_unexpanded->Properties(kError, true));
+  VectorFst<Arc> vfst1(*copy_unexpanded);
+  Connect(&vfst1);
+  ASSERT_TRUE(Verify(vfst1));
+  ASSERT_TRUE(Equal(*cfst3_, vfst1));
+
+  // Partially expand across open-paren transitions so `stack_` has non-zero
+  // stack IDs and `paren_id_` is active on the matchers, then safe-copy.
+  const StateId start = composed.Start();
+  ASSERT_NE(start, kNoStateId);
+  for (ArcIterator<ComposeFst<Arc>> aiter(composed, start); !aiter.Done();
+       aiter.Next()) {
+    for (ArcIterator<ComposeFst<Arc>> aiter2(composed, aiter.Value().nextstate);
+         !aiter2.Done(); aiter2.Next()) {
+    }
+  }
+  std::unique_ptr<ComposeFst<Arc>> copy_partial(composed.Copy(true));
+  ASSERT_FALSE(copy_partial->Properties(kError, true));
+  VectorFst<Arc> vfst2(*copy_partial);
+  Connect(&vfst2);
   ASSERT_TRUE(Verify(vfst2));
   ASSERT_TRUE(Equal(*cfst3_, vfst2));
 }
