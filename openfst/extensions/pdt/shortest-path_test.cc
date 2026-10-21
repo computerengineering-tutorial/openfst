@@ -90,5 +90,33 @@ TEST_F(ShortestPathTest, MultiShortestPath) {
   ASSERT_TRUE(Equal(*spfst4_, path));
 }
 
+TEST_F(ShortestPathTest, FinishedParenSearchDataCache) {
+  using SpData = internal::PdtShortestPathData<Arc>;
+  using SearchState = SpData::SearchState;
+  using ParenSpec = SpData::ParenSpec;
+
+  SpData sp_data(/*gc=*/false);
+  const SearchState s(0, 0);
+  const ParenSpec p1(1, 0, 1);
+  const ParenSpec p2(2, 0, 2);
+
+  sp_data.SetDistance(s, Weight(1.5F));
+  sp_data.SetDistance(p1, Weight(2.5F));
+  sp_data.SetParent(p1, SearchState(3, 0));
+  sp_data.SetDistance(p2, Weight(4.5F));
+  sp_data.SetParent(p2, SearchState(4, 0));
+  sp_data.Finish();
+
+  // Prime state_ / state_data_ with s, then look up p1 (a miss on paren_ since
+  // p2 was accessed last before Finish()).
+  EXPECT_EQ(sp_data.Distance(s), Weight(1.5F));
+  EXPECT_EQ(sp_data.Distance(p1), Weight(2.5F));
+  // Repeat lookup of p1 hits the paren == paren_ cache; lookup of s hits the
+  // s == state_ cache.
+  EXPECT_EQ(sp_data.Distance(p1), Weight(2.5F));
+  EXPECT_EQ(sp_data.Parent(p1), SearchState(3, 0));
+  EXPECT_EQ(sp_data.Distance(s), Weight(1.5F));
+}
+
 }  // namespace
 }  // namespace fst

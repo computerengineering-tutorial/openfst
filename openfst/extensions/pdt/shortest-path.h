@@ -247,7 +247,7 @@ class PdtShortestPathData {
       auto it = paren_map_.find(paren);
       if (it == paren_map_.end()) return &null_search_data_;
       paren_ = paren;
-      return state_data_ = &(it->second);
+      return paren_data_ = &(it->second);
     } else {
       paren_ = paren;
       return paren_data_ = &paren_map_[paren];
