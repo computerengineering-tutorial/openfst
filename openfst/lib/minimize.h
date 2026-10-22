@@ -69,7 +69,7 @@ class StateComparator {
       : fst_(fst), partition_(partition) {}
 
   // Compares state x with state y based on sort criteria.
-  bool operator()(const StateId x, const StateId y) const {
+  bool operator()(StateId x, StateId y) const {
     // Checks for final state equivalence.
     const auto xfinal = fst_.Final(x).Hash();
     const auto yfinal = fst_.Final(y).Hash();
@@ -79,8 +79,10 @@ class StateComparator {
       return false;
     }
     // Checks for number of arcs.
-    if (fst_.NumArcs(x) < fst_.NumArcs(y)) return true;
-    if (fst_.NumArcs(x) > fst_.NumArcs(y)) return false;
+    const auto xnarcs = fst_.NumArcs(x);
+    const auto ynarcs = fst_.NumArcs(y);
+    if (xnarcs < ynarcs) return true;
+    if (xnarcs > ynarcs) return false;
     // If the number of arcs are equal, checks for arc match.
     for (ArcIterator<Fst<Arc>> aiter1(fst_, x), aiter2(fst_, y);
          !aiter1.Done() && !aiter2.Done(); aiter1.Next(), aiter2.Next()) {
@@ -88,12 +90,10 @@ class StateComparator {
       const auto& arc2 = aiter2.Value();
       if (arc1.ilabel < arc2.ilabel) return true;
       if (arc1.ilabel > arc2.ilabel) return false;
-      if (partition_.ClassId(arc1.nextstate) <
-          partition_.ClassId(arc2.nextstate))
-        return true;
-      if (partition_.ClassId(arc1.nextstate) >
-          partition_.ClassId(arc2.nextstate))
-        return false;
+      const auto class1 = partition_.ClassId(arc1.nextstate);
+      const auto class2 = partition_.ClassId(arc2.nextstate);
+      if (class1 < class2) return true;
+      if (class1 > class2) return false;
     }
     return false;
   }
@@ -324,7 +324,11 @@ class AcyclicMinimizer {
     HeightVisitor() : max_height_(0), num_states_(0) {}
 
     // Invoked before DFS visit.
-    void InitVisit(const Fst<Arc>& fst) {}
+    void InitVisit(const Fst<Arc>& fst) {
+      if (const auto num_states = fst.NumStatesIfKnown()) {
+        height_.reserve(*num_states);
+      }
+    }
 
     // Invoked when state is discovered (2nd arg is DFS tree root).
     bool InitState(StateId s, StateId root) {
