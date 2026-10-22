@@ -876,6 +876,7 @@ void PdtPrunedExpand<Arc>::Expand(MutableFst<Arc>* ofst,
   ofst_->DeleteStates();
   ofst_->SetInputSymbols(ifst_->InputSymbols());
   ofst_->SetOutputSymbols(ifst_->OutputSymbols());
+  if (ifst_->Start() == kNoStateId) return;
   limit_ = Times(DistanceToDest(ifst_->Start(), rfst_.Start() - 1), threshold);
   flags_.clear();
   ProcStart();

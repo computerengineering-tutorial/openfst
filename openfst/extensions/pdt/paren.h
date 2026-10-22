@@ -448,7 +448,8 @@ PdtBalanceData<Arc>* PdtBalanceData<Arc>::Reverse(
     StateId num_states, StateId num_split, StateId state_id_shift) const {
   auto bd = std::make_unique<PdtBalanceData<Arc>>();
   absl::flat_hash_set<StateId> close_sources;
-  const auto split_size = num_states / num_split;
+  const StateId split_size =
+      std::max<StateId>(1, num_states / std::max<StateId>(1, num_split));
   for (StateId i = 0; i < num_states; i += split_size) {
     close_sources.clear();
     for (auto it = close_source_map_.begin(); it != close_source_map_.end();

@@ -29,6 +29,7 @@
 #include "absl/strings/string_view.h"
 #include "openfst/lib/arc.h"
 #include "openfst/lib/equal.h"
+#include "openfst/lib/fst.h"
 #include "openfst/lib/prune.h"
 #include "openfst/lib/topsort.h"
 #include "openfst/lib/util.h"
@@ -115,6 +116,52 @@ TEST_F(ExpandTest, PdtExpandAndPrune) {
     ASSERT_TRUE(Verify(vfst1));
     ASSERT_TRUE(Verify(vfst2));
     ASSERT_TRUE(Equal(vfst1, vfst2));
+  }
+}
+
+TEST_F(ExpandTest, PdtExpandAndPruneSmallPdt) {
+  // Small PDT (< 10 states in reversed FST) exercising PdtBalanceData::Reverse
+  // when num_states < num_split.
+  VectorFst<Arc> pfst;
+  const auto s0 = pfst.AddState();
+  const auto s1 = pfst.AddState();
+  const auto s2 = pfst.AddState();
+  const auto s3 = pfst.AddState();
+  pfst.SetStart(s0);
+  pfst.SetFinal(s3, Weight::One());
+  const std::vector<std::pair<Label, Label>> parens = {{10, 11}};
+  pfst.AddArc(s0, Arc(10, 10, Weight(0.5f), s1));
+  pfst.AddArc(s1, Arc(1, 1, Weight(0.25f), s2));
+  pfst.AddArc(s1, Arc(2, 2, Weight(2.25f), s2));
+  pfst.AddArc(s2, Arc(11, 11, Weight(0.25f), s3));
+
+  for (float f : {0.0f, 1.0f, 3.0f}) {
+    VectorFst<Arc> vfst1;
+    Expand(pfst, parens, &vfst1);
+    Prune(&vfst1, Weight(f));
+    TopSort(&vfst1);
+
+    VectorFst<Arc> vfst2;
+    Expand(pfst, parens, &vfst2, PdtExpandOptions<Arc>(true, false, Weight(f)));
+    TopSort(&vfst2);
+
+    ASSERT_TRUE(Verify(vfst1));
+    ASSERT_TRUE(Verify(vfst2));
+    EXPECT_TRUE(Equal(vfst1, vfst2));
+  }
+}
+
+TEST_F(ExpandTest, PdtExpandAndPruneEmptyPdt) {
+  const VectorFst<Arc> empty_fst;
+  for (bool connect : {true, false}) {
+    VectorFst<Arc> ofst;
+    ofst.AddState();
+    ofst.SetStart(0);
+    Expand(empty_fst, parens_, &ofst,
+           PdtExpandOptions<Arc>(connect, false, Weight::One()));
+    ASSERT_TRUE(Verify(ofst));
+    EXPECT_EQ(ofst.NumStates(), 0);
+    EXPECT_EQ(ofst.Start(), kNoStateId);
   }
 }
 
