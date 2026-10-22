@@ -46,6 +46,7 @@
 #include "openfst/script/arciterator-class.h"
 #include "openfst/script/arg-packs.h"
 #include "openfst/script/compile-impl.h"
+#include "openfst/script/compile.h"
 #include "openfst/script/decode.h"
 #include "openfst/script/encode.h"
 #include "openfst/script/encodemapper-class.h"
@@ -440,6 +441,48 @@ TEST(CompileTest, FstCompilerBadIntegersSetError) {
       EXPECT_TRUE(compiler.Fst().Properties(kError, true))
           << "text = " << text << ", nkeep = " << nkeep;
     }
+  }
+}
+
+TEST(CompileTest, ScriptCompileHandlesNullAndWriteFailure) {
+  const absl::FlagSaver fs;
+  absl::SetFlag(&FLAGS_fst_error_fatal, false);
+  const std::string kTextFst = "0 1 1 2\n1\n";
+  const std::string out_path =
+      absl::StrCat(::testing::TempDir(), "/compiled.fst");
+  const std::string bad_out_path =
+      absl::StrCat(::testing::TempDir(), "/nonexistent_dir/compiled.fst");
+
+  {
+    std::istringstream istrm(kTextFst);
+    EXPECT_FALSE(script::Compile(istrm, "test", out_path, "vector",
+                                 "nonexistent", nullptr, nullptr, nullptr,
+                                 /*accep=*/false, /*ikeep=*/false,
+                                 /*okeep=*/false, /*nkeep=*/false));
+  }
+  {
+    std::istringstream istrm(kTextFst);
+    EXPECT_FALSE(script::Compile(istrm, "test", out_path, "nonexistent",
+                                 "standard", nullptr, nullptr, nullptr,
+                                 /*accep=*/false, /*ikeep=*/false,
+                                 /*okeep=*/false, /*nkeep=*/false));
+  }
+  {
+    std::istringstream istrm(kTextFst);
+    EXPECT_FALSE(script::Compile(istrm, "test", bad_out_path, "vector",
+                                 "standard", nullptr, nullptr, nullptr,
+                                 /*accep=*/false, /*ikeep=*/false,
+                                 /*okeep=*/false, /*nkeep=*/false));
+  }
+  {
+    std::istringstream istrm(kTextFst);
+    EXPECT_TRUE(script::Compile(istrm, "test", out_path, "vector", "standard",
+                                nullptr, nullptr, nullptr,
+                                /*accep=*/false, /*ikeep=*/false,
+                                /*okeep=*/false, /*nkeep=*/false));
+    std::unique_ptr<FstClass> fst(FstClass::Read(out_path));
+    ASSERT_NE(fst, nullptr);
+    EXPECT_EQ(fst->NumStatesIfKnown(), 2);
   }
 }
 

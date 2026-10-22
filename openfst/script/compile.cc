@@ -29,7 +29,7 @@
 namespace fst {
 namespace script {
 
-void Compile(std::istream& istrm, const std::string& source,
+bool Compile(std::istream& istrm, const std::string& source,
              const std::string& dest, const std::string& fst_type,
              const std::string& arc_type, const SymbolTable* isyms,
              const SymbolTable* osyms, const SymbolTable* ssyms, bool accep,
@@ -37,7 +37,7 @@ void Compile(std::istream& istrm, const std::string& source,
   std::unique_ptr<FstClass> fst(CompileInternal(istrm, source, fst_type,
                                                 arc_type, isyms, osyms, ssyms,
                                                 accep, ikeep, okeep, nkeep));
-  fst->Write(dest);
+  return fst && fst->Write(dest);
 }
 
 std::unique_ptr<FstClass> CompileInternal(

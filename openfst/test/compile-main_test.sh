@@ -45,3 +45,10 @@ source "$BIN"/setup.sh
 "$BIN"/fstcompile --isymbols="$DAT"/isyms.map --osymbols "$DAT"/osyms.map \
   --keep_isymbols --keep_osymbols "$DAT"/fst.txt > "$TST"/fst.compiled
 "$BIN"/fstequal -v=1 "$DAT"/fst.compiled "$TST"/fst.compiled
+
+# error cases: unwritable output path, unknown arc_type / fst_type
+! "$BIN"/fstcompile "$DAT"/fst.txt "$TST"/nonexistent_dir/fst.compiled
+! "$BIN"/fstcompile --arc_type=nonexistent --fst_error_fatal=false \
+  "$DAT"/fst.txt "$TST"/fst.compiled
+! "$BIN"/fstcompile --fst_type=nonexistent --fst_error_fatal=false \
+  "$DAT"/fst.txt "$TST"/fst.compiled

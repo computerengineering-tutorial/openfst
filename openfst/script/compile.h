@@ -35,10 +35,10 @@
 namespace fst {
 namespace script {
 
-// This operation exists in two forms. 1 is a void operation which writes the
-// compiled machine to disk; 2 returns an FstClass. I/O should normally be done
-// using the binary format for efficiency, so users are STRONGLY ENCOURAGED to
-// use 1 or to construct FSTs using the C++ FST mutation operations.
+// This operation exists in two forms. One writes the compiled machine to disk;
+// the second returns an FstClass. I/O should normally be done using the binary
+// efficiency, so users are STRONGLY ENCOURAGED to use 1 or to construct FSTs
+// using the C++ FST mutation operations.
 
 // Note: it is safe to pass these strings as references because
 // this struct is only used to pass them deeper in the call graph.
@@ -84,7 +84,7 @@ void CompileInternal(FstCompileArgs* args) {
   args->retval = fst ? std::make_unique<FstClass>(std::move(fst)) : nullptr;
 }
 
-void Compile(std::istream& istrm, const std::string& source,
+bool Compile(std::istream& istrm, const std::string& source,
              const std::string& dest, const std::string& fst_type,
              const std::string& arc_type, const SymbolTable* isyms,
              const SymbolTable* osyms, const SymbolTable* ssyms, bool accep,

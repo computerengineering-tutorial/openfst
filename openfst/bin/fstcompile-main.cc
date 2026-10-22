@@ -96,12 +96,12 @@ int fstcompile_main(int argc, char** argv) {
 
   const std::string dest = argc > 2 && strcmp(argv[2], "-") != 0 ? argv[2] : "";
 
-  s::Compile(istrm, source, dest, absl::GetFlag(FLAGS_fst_type),
-             absl::GetFlag(FLAGS_arc_type), isyms.get(), osyms.get(),
-             ssyms.get(), absl::GetFlag(FLAGS_acceptor),
-             absl::GetFlag(FLAGS_keep_isymbols),
-             absl::GetFlag(FLAGS_keep_osymbols),
-             absl::GetFlag(FLAGS_keep_state_numbering));
-
-  return 0;
+  return s::Compile(istrm, source, dest, absl::GetFlag(FLAGS_fst_type),
+                    absl::GetFlag(FLAGS_arc_type), isyms.get(), osyms.get(),
+                    ssyms.get(), absl::GetFlag(FLAGS_acceptor),
+                    absl::GetFlag(FLAGS_keep_isymbols),
+                    absl::GetFlag(FLAGS_keep_osymbols),
+                    absl::GetFlag(FLAGS_keep_state_numbering))
+             ? 0
+             : 1;
 }
