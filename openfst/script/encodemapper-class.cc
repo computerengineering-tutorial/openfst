@@ -52,8 +52,6 @@ absl_nullable std::unique_ptr<EncodeMapperClass> ReadEncodeMapper(
     LOG(ERROR) << "Old-style EncodeMapper cannot be used with script interface";
     return nullptr;
   }
-  // The actual reader also consumes the header, so to be kind we rewind.
-  istrm.seekg(0, istrm.beg);
   static const auto* reg =
       EncodeMapperClassIORegistration::Register::GetRegister();
   const auto reader = reg->GetReader(arc_type);
@@ -61,7 +59,7 @@ absl_nullable std::unique_ptr<EncodeMapperClass> ReadEncodeMapper(
     LOG(ERROR) << "EncodeMapperClass::Read: Unknown arc type: " << arc_type;
     return nullptr;
   }
-  return reader(istrm, source);
+  return reader(istrm, source, &hdr);
 }
 
 absl_nullable std::unique_ptr<EncodeMapperImplBase> CreateEncodeMapper(

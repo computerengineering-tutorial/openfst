@@ -203,7 +203,8 @@ class EncodeTable {
 
   size_t Size() const { return triples_.size(); }
 
-  static EncodeTable* Read(std::istream& strm, absl::string_view source);
+  static EncodeTable* Read(std::istream& strm, absl::string_view source,
+                           const EncodeTableHeader* header = nullptr);
 
   bool Write(std::ostream& strm, absl::string_view source) const;
 
@@ -259,9 +260,14 @@ class EncodeTable {
 
 template <class Arc>
 EncodeTable<Arc>* EncodeTable<Arc>::Read(std::istream& strm,
-                                         absl::string_view source) {
+                                         absl::string_view source,
+                                         const EncodeTableHeader* header) {
   EncodeTableHeader hdr;
-  if (!hdr.Read(strm, source)) return nullptr;
+  if (header != nullptr) {
+    hdr = *header;
+  } else if (!hdr.Read(strm, source)) {
+    return nullptr;
+  }
   const auto flags = hdr.Flags();
   const auto size = hdr.Size();
   auto table = std::make_unique<EncodeTable>(flags);
@@ -390,8 +396,9 @@ class EncodeMapper {
   EncodeType Type() const { return type_; }
 
   static EncodeMapper* Read(std::istream& strm, absl::string_view source,
-                            EncodeType type = ENCODE) {
-    auto* table = internal::EncodeTable<Arc>::Read(strm, source);
+                            EncodeType type = ENCODE,
+                            const EncodeTableHeader* header = nullptr) {
+    auto* table = internal::EncodeTable<Arc>::Read(strm, source, header);
     return table ? new EncodeMapper(table->Flags(), type, table) : nullptr;
   }
 

@@ -27,14 +27,17 @@
 #include <utility>
 
 #include "absl/base/casts.h"
+#include "absl/base/no_destructor.h"
 #include "absl/base/nullability.h"
 #include "absl/strings/string_view.h"
 #include "openfst/lib/encode.h"
 #include "openfst/lib/generic-register.h"
+#include "openfst/lib/properties.h"
 #include "openfst/lib/symbol-table.h"
 #include "openfst/lib/util.h"
 #include "openfst/script/arc-class.h"
 #include "openfst/script/fst-class.h"
+#include "openfst/script/weight-class.h"
 
 // Scripting API support for EncodeMapper.
 
@@ -152,17 +155,32 @@ class EncodeMapperClass {
     return *this;
   }
 
-  ArcClass operator()(const ArcClass& arc) { return (*impl_)(arc); }
+  ArcClass operator()(const ArcClass& arc) {
+    if (!impl_) {
+      return ArcClass(kNoLabel, kNoLabel, WeightClass(), arc.nextstate);
+    }
+    return (*impl_)(arc);
+  }
 
-  const std::string& ArcType() const { return impl_->ArcType(); }
+  const std::string& ArcType() const {
+    if (impl_) return impl_->ArcType();
+    static const absl::NoDestructor<std::string> no_type("none");
+    return *no_type;
+  }
 
-  const std::string& WeightType() const { return impl_->WeightType(); }
+  const std::string& WeightType() const {
+    if (impl_) return impl_->WeightType();
+    static const absl::NoDestructor<std::string> no_type("none");
+    return *no_type;
+  }
 
-  uint8_t Flags() const { return impl_->Flags(); }
+  uint8_t Flags() const { return impl_ ? impl_->Flags() : 0; }
 
-  uint64_t Properties(uint64_t inprops) { return impl_->Properties(inprops); }
+  uint64_t Properties(uint64_t inprops) {
+    return impl_ ? impl_->Properties(inprops) : kError;
+  }
 
-  EncodeType Type() const { return impl_->Type(); }
+  EncodeType Type() const { return impl_ ? impl_->Type() : ENCODE; }
 
   static absl_nullable std::unique_ptr<EncodeMapperClass> Read(
       const std::string& source);
@@ -170,29 +188,35 @@ class EncodeMapperClass {
   static absl_nullable std::unique_ptr<EncodeMapperClass> Read(
       std::istream& strm, const std::string& source);
 
-  bool Write(const std::string& source) const { return impl_->Write(source); }
-
-  bool Write(std::ostream& strm, const std::string& source) const {
-    return impl_->Write(strm, source);
+  bool Write(const std::string& source) const {
+    return impl_ && impl_->Write(source);
   }
 
-  const SymbolTable* InputSymbols() const { return impl_->InputSymbols(); }
+  bool Write(std::ostream& strm, const std::string& source) const {
+    return impl_ && impl_->Write(strm, source);
+  }
 
-  const SymbolTable* OutputSymbols() const { return impl_->OutputSymbols(); }
+  const SymbolTable* InputSymbols() const {
+    return impl_ ? impl_->InputSymbols() : nullptr;
+  }
+
+  const SymbolTable* OutputSymbols() const {
+    return impl_ ? impl_->OutputSymbols() : nullptr;
+  }
 
   void SetInputSymbols(const SymbolTable* syms) {
-    impl_->SetInputSymbols(syms);
+    if (impl_) impl_->SetInputSymbols(syms);
   }
 
   void SetOutputSymbols(const SymbolTable* syms) {
-    impl_->SetOutputSymbols(syms);
+    if (impl_) impl_->SetOutputSymbols(syms);
   }
 
   // Implementation stuff.
 
   template <class Arc>
   EncodeMapper<Arc>* GetEncodeMapper() {
-    if (Arc::Type() != ArcType()) {
+    if (!impl_ || Arc::Type() != ArcType()) {
       return nullptr;
     } else {
       auto* typed_impl =
@@ -203,7 +227,7 @@ class EncodeMapperClass {
 
   template <class Arc>
   const EncodeMapper<Arc>* GetEncodeMapper() const {
-    if (Arc::Type() != ArcType()) {
+    if (!impl_ || Arc::Type() != ArcType()) {
       return nullptr;
     } else {
       auto* typed_impl =
@@ -215,10 +239,11 @@ class EncodeMapperClass {
   // Required for registration.
 
   template <class Arc>
-  static std::unique_ptr<EncodeMapperClass> Read(std::istream& strm,
-                                                 absl::string_view source) {
+  static std::unique_ptr<EncodeMapperClass> Read(
+      std::istream& strm, absl::string_view source,
+      const EncodeTableHeader* header = nullptr) {
     std::unique_ptr<EncodeMapper<Arc>> mapper(
-        EncodeMapper<Arc>::Read(strm, source));
+        EncodeMapper<Arc>::Read(strm, source, ENCODE, header));
     return mapper ? std::make_unique<EncodeMapperClass>(*mapper) : nullptr;
   }
 
@@ -282,7 +307,8 @@ class EncodeMapperClassIORegister
 // Struct containing everything needed to register a particular type
 struct EncodeMapperClassIORegistration {
   using Reader = std::unique_ptr<EncodeMapperClass> (*)(
-      std::istream& stream, absl::string_view source);
+      std::istream& stream, absl::string_view source,
+      const EncodeTableHeader* header);
 
   using Creator = std::unique_ptr<EncodeMapperImplBase> (*)(uint8_t flags,
                                                             EncodeType type);

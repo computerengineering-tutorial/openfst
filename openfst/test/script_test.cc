@@ -20,10 +20,13 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <istream>
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <streambuf>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -353,6 +356,85 @@ TEST_F(ClassTest, EncodeMapperClassOperations) {
   Encode(&vfstc, &encoder);
   Decode(&vfstc, encoder);
   ASSERT_TRUE(Equal(vfstc_copy, vfstc));
+
+  // Death test for unknown arc type in fatal mode.
+  ASSERT_DEATH(EncodeMapperClass(kDummyName, kEncodeLabels, ENCODE), kArcError);
+
+  // Tests null-impl EncodeMapperClass behavior (default-constructed or unknown
+  // arc type in non-fatal mode).
+  absl::SetFlag(&FLAGS_fst_error_fatal, false);
+  for (EncodeMapperClass invalid :
+       {EncodeMapperClass(),
+        EncodeMapperClass(kDummyName, kEncodeLabels, ENCODE)}) {
+    EXPECT_EQ(invalid.ArcType(), "none");
+    EXPECT_EQ(invalid.WeightType(), "none");
+    EXPECT_EQ(invalid.Flags(), 0);
+    EXPECT_EQ(invalid.Properties(0), kError);
+    EXPECT_EQ(invalid.Type(), ENCODE);
+    EXPECT_EQ(invalid.InputSymbols(), nullptr);
+    EXPECT_EQ(invalid.OutputSymbols(), nullptr);
+    SymbolTable syms;
+    invalid.SetInputSymbols(&syms);
+    invalid.SetOutputSymbols(&syms);
+    EXPECT_EQ(invalid.InputSymbols(), nullptr);
+    EXPECT_EQ(invalid.OutputSymbols(), nullptr);
+    EXPECT_EQ(invalid.GetEncodeMapper<StdArc>(), nullptr);
+    const EncodeMapperClass& const_invalid = invalid;
+    EXPECT_EQ(const_invalid.GetEncodeMapper<StdArc>(), nullptr);
+    std::ostringstream ostrm;
+    EXPECT_FALSE(invalid.Write(ostrm, "mem"));
+    const ArcClass mapped =
+        invalid(ArcClass(1, 2, WeightClass::One("tropical"), 3));
+    EXPECT_EQ(mapped.ilabel, kNoLabel);
+    EXPECT_EQ(mapped.olabel, kNoLabel);
+    EXPECT_EQ(mapped.weight.Type(), "none");
+    EXPECT_EQ(mapped.weight.ToString(), "none");
+    EXPECT_EQ(mapped.nextstate, 3);
+    Encode(&vfstc, &invalid);
+    Decode(&vfstc, invalid);
+  }
+
+  // Tests reading an EncodeMapperClass from a non-zero stream offset and from
+  // a non-seekable stream (such as a pipe or stdin).
+  Encode(&vfstc, &encoder);
+  std::ostringstream serialized;
+  ASSERT_TRUE(encoder.Write(serialized, "mem"));
+  const std::string mapper_bytes = serialized.str();
+
+  {
+    const std::string kPrefix = "PREFIX_HEADER";
+    std::istringstream istrm(absl::StrCat(kPrefix, mapper_bytes));
+    std::string prefix(kPrefix.size(), '\0');
+    ASSERT_TRUE(istrm.read(prefix.data(), prefix.size()));
+    std::unique_ptr<EncodeMapperClass> read_mapper =
+        EncodeMapperClass::Read(istrm, "offset_stream");
+    ASSERT_NE(read_mapper, nullptr);
+    EXPECT_EQ(read_mapper->ArcType(), encoder.ArcType());
+    EXPECT_EQ(read_mapper->Flags(), encoder.Flags());
+    VectorFstClass decoded(vfstc);
+    Decode(&decoded, *read_mapper);
+    EXPECT_TRUE(Equal(vfstc_copy, decoded));
+  }
+
+  {
+    class NonSeekableInBuf : public std::streambuf {
+     public:
+      explicit NonSeekableInBuf(std::string data) : data_(std::move(data)) {
+        setg(data_.data(), data_.data(), data_.data() + data_.size());
+      }
+
+     private:
+      std::string data_;
+    };
+    NonSeekableInBuf buf(mapper_bytes);
+    std::istream non_seekable_strm(&buf);
+    std::unique_ptr<EncodeMapperClass> read_mapper =
+        EncodeMapperClass::Read(non_seekable_strm, "pipe_stream");
+    ASSERT_NE(read_mapper, nullptr);
+    VectorFstClass decoded(vfstc);
+    Decode(&decoded, *read_mapper);
+    EXPECT_TRUE(Equal(vfstc_copy, decoded));
+  }
 }
 
 // Applying an `ArcClass` whose weight type does not match the FST or encoder
