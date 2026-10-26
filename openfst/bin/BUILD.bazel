@@ -532,6 +532,10 @@ cc_library(
 cc_binary(
     name = "fstarcsort",
     srcs = ["fstarcsort.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstarcsort-main",
@@ -542,6 +546,10 @@ cc_binary(
 cc_binary(
     name = "fstclosure",
     srcs = ["fstclosure.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstclosure-main",
@@ -552,6 +560,10 @@ cc_binary(
 cc_binary(
     name = "fstcompile",
     srcs = ["fstcompile.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstcompile-main",
@@ -562,6 +574,10 @@ cc_binary(
 cc_binary(
     name = "fstcompose",
     srcs = ["fstcompose.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstcompose-main",
@@ -572,6 +588,10 @@ cc_binary(
 cc_binary(
     name = "fstconcat",
     srcs = ["fstconcat.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [":fstconcat-main"],
 )
@@ -579,6 +599,10 @@ cc_binary(
 cc_binary(
     name = "fstconnect",
     srcs = ["fstconnect.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [":fstconnect-main"],
 )
@@ -586,6 +610,10 @@ cc_binary(
 cc_binary(
     name = "fstconvert",
     srcs = ["fstconvert.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstconvert-main",
@@ -596,6 +624,10 @@ cc_binary(
 cc_binary(
     name = "fstdeterminize",
     srcs = ["fstdeterminize.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstdeterminize-main",
@@ -607,6 +639,10 @@ cc_binary(
 cc_binary(
     name = "fstdifference",
     srcs = ["fstdifference.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstdifference-main",
@@ -617,6 +653,10 @@ cc_binary(
 cc_binary(
     name = "fstdisambiguate",
     srcs = ["fstdisambiguate.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstdisambiguate-main",
@@ -628,6 +668,10 @@ cc_binary(
 cc_binary(
     name = "fstdraw",
     srcs = ["fstdraw.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstdraw-main",
@@ -638,6 +682,10 @@ cc_binary(
 cc_binary(
     name = "fstencode",
     srcs = ["fstencode.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstencode-main",
@@ -648,6 +696,10 @@ cc_binary(
 cc_binary(
     name = "fstepsnormalize",
     srcs = ["fstepsnormalize.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstepsnormalize-main",
@@ -658,6 +710,10 @@ cc_binary(
 cc_binary(
     name = "fstequal",
     srcs = ["fstequal.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstequal-main",
@@ -669,6 +725,10 @@ cc_binary(
 cc_binary(
     name = "fstequivalent",
     srcs = ["fstequivalent.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstequivalent-main",
@@ -681,6 +741,10 @@ cc_binary(
 cc_binary(
     name = "fstinfo",
     srcs = ["fstinfo.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstinfo-main",
@@ -691,6 +755,10 @@ cc_binary(
 cc_binary(
     name = "fstintersect",
     srcs = ["fstintersect.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstintersect-main",
@@ -701,6 +769,10 @@ cc_binary(
 cc_binary(
     name = "fstinvert",
     srcs = ["fstinvert.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [":fstinvert-main"],
 )
@@ -708,6 +780,10 @@ cc_binary(
 cc_binary(
     name = "fstisomorphic",
     srcs = ["fstisomorphic.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstisomorphic-main",
@@ -719,6 +795,10 @@ cc_binary(
 cc_binary(
     name = "fstmap",
     srcs = ["fstmap.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstmap-main",
@@ -730,6 +810,10 @@ cc_binary(
 cc_binary(
     name = "fstminimize",
     srcs = ["fstminimize.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstminimize-main",
@@ -741,6 +825,10 @@ cc_binary(
 cc_binary(
     name = "fstprint",
     srcs = ["fstprint.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstprint-main",
@@ -751,6 +839,10 @@ cc_binary(
 cc_binary(
     name = "fstproject",
     srcs = ["fstproject.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstproject-main",
@@ -761,6 +853,10 @@ cc_binary(
 cc_binary(
     name = "fstprune",
     srcs = ["fstprune.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstprune-main",
@@ -772,6 +868,10 @@ cc_binary(
 cc_binary(
     name = "fstpush",
     srcs = ["fstpush.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstpush-main",
@@ -783,6 +883,10 @@ cc_binary(
 cc_binary(
     name = "fstrandgen",
     srcs = ["fstrandgen.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstrandgen-main",
@@ -794,6 +898,10 @@ cc_binary(
 cc_binary(
     name = "fstrelabel",
     srcs = ["fstrelabel.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstrelabel-main",
@@ -804,6 +912,10 @@ cc_binary(
 cc_binary(
     name = "fstreplace",
     srcs = ["fstreplace.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstreplace-main",
@@ -814,6 +926,10 @@ cc_binary(
 cc_binary(
     name = "fstreverse",
     srcs = ["fstreverse.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstreverse-main",
@@ -824,6 +940,10 @@ cc_binary(
 cc_binary(
     name = "fstreweight",
     srcs = ["fstreweight.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstreweight-main",
@@ -834,6 +954,10 @@ cc_binary(
 cc_binary(
     name = "fstrmepsilon",
     srcs = ["fstrmepsilon.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstrmepsilon-main",
@@ -845,6 +969,10 @@ cc_binary(
 cc_binary(
     name = "fstshortestdistance",
     srcs = ["fstshortestdistance.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstshortestdistance-main",
@@ -856,6 +984,10 @@ cc_binary(
 cc_binary(
     name = "fstshortestpath",
     srcs = ["fstshortestpath.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstshortestpath-main",
@@ -867,6 +999,10 @@ cc_binary(
 cc_binary(
     name = "fstsymbols",
     srcs = ["fstsymbols.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstsymbols-main",
@@ -877,6 +1013,10 @@ cc_binary(
 cc_binary(
     name = "fstsynchronize",
     srcs = ["fstsynchronize.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [":fstsynchronize-main"],
 )
@@ -884,6 +1024,10 @@ cc_binary(
 cc_binary(
     name = "fsttopsort",
     srcs = ["fsttopsort.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [":fsttopsort-main"],
 )
@@ -891,6 +1035,10 @@ cc_binary(
 cc_binary(
     name = "fstunion",
     srcs = ["fstunion.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [":fstunion-main"],
 )

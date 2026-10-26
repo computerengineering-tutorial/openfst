@@ -73,6 +73,10 @@ cc_library(
 # `:far_main`.
 cc_binary(
     name = "far",
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":extensions",

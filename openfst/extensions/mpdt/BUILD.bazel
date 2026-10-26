@@ -191,6 +191,10 @@ cc_library(
 cc_binary(
     name = "mpdtcompose",
     srcs = ["mpdtcompose.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":mpdtcompose-main",
@@ -201,6 +205,10 @@ cc_binary(
 cc_binary(
     name = "mpdtexpand",
     srcs = ["mpdtexpand.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":mpdtexpand-main",
@@ -211,6 +219,10 @@ cc_binary(
 cc_binary(
     name = "mpdtinfo",
     srcs = ["mpdtinfo.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":mpdtinfo-main",
@@ -221,6 +233,10 @@ cc_binary(
 cc_binary(
     name = "mpdtreverse",
     srcs = ["mpdtreverse.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":mpdtreverse-main",

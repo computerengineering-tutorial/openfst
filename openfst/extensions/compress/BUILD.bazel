@@ -78,6 +78,10 @@ cc_library(
 cc_binary(
     name = "fstcompress",
     srcs = ["fstcompress.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstcompress-main",
@@ -88,6 +92,10 @@ cc_binary(
 cc_binary(
     name = "fstrandmod",
     srcs = ["fstrandmod.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":randmod",
@@ -177,6 +185,10 @@ cc_library(
 cc_binary(
     name = "fstquantize",
     srcs = ["fstquantize.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         "quantize_weights",

@@ -173,6 +173,10 @@ cc_library(
 cc_binary(
     name = "fstlinear",
     srcs = ["fstlinear.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstlinear-main",
@@ -183,6 +187,10 @@ cc_binary(
 cc_binary(
     name = "fstloglinearapply",
     srcs = ["fstloglinearapply.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":fstloglinearapply-main",

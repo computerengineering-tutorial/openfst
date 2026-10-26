@@ -2656,6 +2656,10 @@ cc_binary(
     name = "generic_register_dso_test_helper",
     testonly = 1,
     srcs = ["generic_register_dso_test_helper.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":my_register",

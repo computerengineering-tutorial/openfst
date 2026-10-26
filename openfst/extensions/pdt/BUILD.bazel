@@ -279,6 +279,10 @@ cc_library(
 cc_binary(
     name = "pdtcompose",
     srcs = ["pdtcompose.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":pdtcompose-main",
@@ -289,6 +293,10 @@ cc_binary(
 cc_binary(
     name = "pdtexpand",
     srcs = ["pdtexpand.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":pdtexpand-main",
@@ -299,6 +307,10 @@ cc_binary(
 cc_binary(
     name = "pdtinfo",
     srcs = ["pdtinfo.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":pdtinfo-main",
@@ -309,6 +321,10 @@ cc_binary(
 cc_binary(
     name = "pdtreplace",
     srcs = ["pdtreplace.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":pdtreplace-main",
@@ -320,6 +336,10 @@ cc_binary(
 cc_binary(
     name = "pdtreverse",
     srcs = ["pdtreverse.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":pdtreverse-main",
@@ -330,6 +350,10 @@ cc_binary(
 cc_binary(
     name = "pdtshortestpath",
     srcs = ["pdtshortestpath.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":pdtshortestpath-main",

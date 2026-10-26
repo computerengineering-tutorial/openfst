@@ -66,6 +66,10 @@ cc_library(
 cc_binary(
     name = "fstspecial",
     srcs = ["fstspecial.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":phi-fst",

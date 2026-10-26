@@ -406,6 +406,10 @@ cc_library(
 cc_binary(
     name = "farcreate",
     srcs = ["farcreate.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farcreate-main",
@@ -416,6 +420,10 @@ cc_binary(
 cc_binary(
     name = "farcompilestrings",
     srcs = ["farcompilestrings.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farcompilestrings-main",
@@ -426,6 +434,10 @@ cc_binary(
 cc_binary(
     name = "farconvert",
     srcs = ["farconvert.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farconvert-main",
@@ -436,6 +448,10 @@ cc_binary(
 cc_binary(
     name = "farencode",
     srcs = ["farencode.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farencode-main",
@@ -446,6 +462,10 @@ cc_binary(
 cc_binary(
     name = "farequal",
     srcs = ["farequal.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farequal-main",
@@ -457,6 +477,10 @@ cc_binary(
 cc_binary(
     name = "farextract",
     srcs = ["farextract.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farextract-main",
@@ -467,6 +491,10 @@ cc_binary(
 cc_binary(
     name = "farinfo",
     srcs = ["farinfo.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farinfo-main",
@@ -477,6 +505,10 @@ cc_binary(
 cc_binary(
     name = "farisomorphic",
     srcs = ["farisomorphic.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farisomorphic-main",
@@ -488,6 +520,10 @@ cc_binary(
 cc_binary(
     name = "farprintstrings",
     srcs = ["farprintstrings.cc"],
+    linkopts = select({
+        "@platforms//os:linux": ["-Wl,--export-dynamic"],
+        "//conditions:default": [],
+    }),
     linkstatic = True,
     deps = [
         ":farprintstrings-main",
