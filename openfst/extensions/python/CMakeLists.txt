@@ -81,9 +81,11 @@ if(Python3_FOUND AND CYTHON_EXECUTABLE)
 
   target_link_libraries(
     pywrapfst
-    PRIVATE fst
+    PRIVATE ${OPENFST_ALWAYS_LINK_START}
+            fst
             fstscript
             fstfarscript
+            ${OPENFST_ALWAYS_LINK_END}
             absl::flags
             Python3::Module
   )

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=64.0.0", "wheel", "cython>=3.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openfst-py"
+version = "0.1.0"
+description = "Stand-alone, multiplatform OpenFst Python bindings with full pywrapfst compatibility"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Jenil Sheth", email = "computerengineeringtutorial@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+[tool.cibuildwheel]
+build-frontend = "pip"
+build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+skip = "pp* *musllinux_i686"
+build-verbosity = 1
+
+test-command = "python -c \"import pywrapfst as fst; import openfst; import openfst_py; v = fst.VectorFst(); s = v.add_state(); v.set_start(s); assert v.num_states() == 1; print('OpenFst wheel test passed!')\""
+test-skip = "*_arm64 *_universal2:arm64 *win_arm64"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64", "i686"]
+before-build = "pip install --upgrade cmake ninja cython"
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64", "universal2"]
+before-build = "pip install --upgrade cmake ninja cython"
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64", "x86", "ARM64"]
+before-build = "pip install --upgrade cmake ninja cython"
