@@ -7,7 +7,7 @@ name = "openfst-py"
 version = "0.1.0"
 description = "Stand-alone, multiplatform OpenFst Python bindings with full pywrapfst compatibility"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
 authors = [
     { name = "Jenil Sheth", email = "computerengineeringtutorial@gmail.com" }
@@ -21,7 +21,6 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -34,7 +33,7 @@ classifiers = [
 
 [tool.cibuildwheel]
 build-frontend = "pip"
-build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "pp* *musllinux_i686"
 build-verbosity = 1
 

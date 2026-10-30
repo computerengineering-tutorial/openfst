@@ -32,13 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
 
@@ -59,66 +59,57 @@ jobs:
 
   # -------------------------------------------------------------
   # Build wheels across all OS platforms and CPU architectures
+  # (Fully Parallel, 100% Native Runners - NO QEMU)
   # -------------------------------------------------------------
   build_wheels:
     name: Wheels on ${{ matrix.os }} (${{ matrix.cibw_archs }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 180
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Linux x86_64 & 32-bit i686
+          # Linux x86_64 (64-bit Intel/AMD)
           - os: ubuntu-latest
-            cibw_archs: "x86_64 i686"
-            qemu: false
-
-          # Linux aarch64 (ARM64)
-          - os: ubuntu-latest
-            cibw_archs: "aarch64"
-            qemu: true
-
-          # Linux PowerPC (ppc64le) & IBM System z (s390x)
-          - os: ubuntu-latest
-            cibw_archs: "ppc64le s390x"
-            qemu: true
-
-          # macOS Intel (x86_64)
-          - os: macos-13
             cibw_archs: "x86_64"
-            qemu: false
 
-          # macOS Apple Silicon (arm64 & universal2)
-          - os: macos-14
-            cibw_archs: "arm64 universal2"
-            qemu: false
+          # Linux i686 (32-bit x86 - native execution on x86_64 CPU)
+          - os: ubuntu-latest
+            cibw_archs: "i686"
 
-          # Windows x86_64 (AMD64) & 32-bit (x86)
+          # Linux aarch64 (ARM64 - native GitHub ARM64 runner, NO QEMU)
+          - os: ubuntu-24.04-arm
+            cibw_archs: "aarch64"
+
+          # macOS Apple Silicon (arm64)
+          - os: macos-15
+            cibw_archs: "arm64"
+
+          # macOS Intel & Universal (x86_64 & universal2)
+          - os: macos-15
+            cibw_archs: "x86_64 universal2"
+
+          # Windows x86_64 (AMD64)
           - os: windows-latest
-            cibw_archs: "AMD64 x86"
-            qemu: false
+            cibw_archs: "AMD64"
 
-          # Windows ARM64
+          # Windows 32-bit (x86)
+          - os: windows-latest
+            cibw_archs: "x86"
+
+          # Windows ARM64 (native MSVC cross-compilation)
           - os: windows-latest
             cibw_archs: "ARM64"
-            qemu: false
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           fetch-depth: 0
 
-      # Set up QEMU for non-x86 Linux architectures
-      - name: Set up QEMU
-        if: matrix.qemu
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
 

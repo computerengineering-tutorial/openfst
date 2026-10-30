@@ -11,7 +11,7 @@ Multiplatform Python library for **[OpenFst](https://www.openfst.org/)** (Weight
 
 - **100% OpenFst `pywrapfst` Compatible**: Seamlessly drop into existing workflows (ASR, NLP, Kaldi, Pynini) that expect `import pywrapfst as fst` or `import openfst`.
 - **Multiplatform & Multi-Architecture**: Prebuilt wheels for:
-  - **Linux**: `x86_64`, `aarch64` (ARM64), `i686` (32-bit), `ppc64le`, `s390x` (manylinux & musllinux)
+  - **Linux**: `x86_64`, `aarch64` (ARM64), `i686` (32-bit) (`manylinux` & `musllinux`)
   - **macOS**: Apple Silicon (`arm64`), Intel (`x86_64`), and `universal2`
   - **Windows**: `AMD64` (64-bit), `x86` (32-bit), `ARM64`
 - **Self-Contained**: Statically bundles OpenFst and Abseil with zero external runtime library dependencies.
@@ -79,7 +79,7 @@ v = fst.VectorFst()
 
 | Platform | Architectures | Wheel Type |
 | :--- | :--- | :--- |
-| **Linux** | `x86_64`, `aarch64`, `i686`, `ppc64le`, `s390x` | `manylinux2014`, `manylinux_2_28`, `musllinux_1_2` |
+| **Linux** | `x86_64`, `aarch64` (ARM64), `i686` | `manylinux2014`, `manylinux_2_28`, `musllinux_1_2` |
 | **macOS** | `arm64` (Apple Silicon M1/M2/M3/M4), `x86_64` (Intel), `universal2` | `macosx_10_15_x86_64`, `macosx_11_0_arm64`, `macosx_11_0_universal2` |
 | **Windows** | `AMD64` (x86_64), `x86` (32-bit), `ARM64` | `win_amd64`, `win32`, `win_arm64` |
 
