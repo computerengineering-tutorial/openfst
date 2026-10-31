@@ -67,6 +67,12 @@ class CMakeBuild(build_ext):
         print(f"OpenFst repository root identified at: {source_dir}")
 
         cfg = "Release"
+        cython_bin = shutil.which("cython")
+        if not cython_bin or not Path(cython_bin).exists():
+            candidate = Path(sys.executable).parent / "cython"
+            if candidate.exists():
+                cython_bin = str(candidate)
+
         cmake_args = [
             f"-DCMAKE_BUILD_TYPE={cfg}",
             "-DOPENFST_ENABLE_PYTHON=ON",
@@ -76,7 +82,10 @@ class CMakeBuild(build_ext):
             "-DBUILD_SHARED_LIBS=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f"-DPython3_EXECUTABLE={sys.executable}",
+            f"-DPython3_ROOT_DIR={sys.prefix}",
         ]
+        if cython_bin:
+            cmake_args.append(f"-DCYTHON_EXECUTABLE={cython_bin}")
 
         # Use Ninja if available
         if shutil.which("ninja"):
@@ -100,23 +109,49 @@ class CMakeBuild(build_ext):
         if sys.platform == "win32":
             cmake_args.append("-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL")
 
-        # Configure CMake
-        print(f"Configuring OpenFst with CMake: {cmake_args}")
-        subprocess.check_call(
-            [cmake_bin, "-S", str(source_dir), "-B", str(build_temp)] + cmake_args
+        # Configure CMake with full streaming output
+        print(f"Configuring OpenFst with CMake: {cmake_args}", flush=True)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        cfg_proc = subprocess.Popen(
+            [cmake_bin, "-S", str(source_dir), "-B", str(build_temp)] + cmake_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
+        cfg_output = []
+        for line in cfg_proc.stdout:
+            print(line, end="", flush=True)
+            cfg_output.append(line)
+        cfg_proc.wait()
+        if cfg_proc.returncode != 0:
+            err_msg = "".join(cfg_output[-40:])
+            raise RuntimeError(f"CMake configure failed with code {cfg_proc.returncode}:\n{err_msg}")
 
-        # Build target pywrapfst
+        # Build target pywrapfst with full streaming verbose output
         jobs = os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL") or str(
             min(os.cpu_count() or 2, 2)
         )
-        build_args = ["--build", str(build_temp), "--target", "pywrapfst", "--config", cfg, "-j", jobs]
+        build_args = ["--build", str(build_temp), "--target", "pywrapfst", "--config", cfg, "-j", jobs, "-v"]
         print(f"Building pywrapfst target: {build_args}", flush=True)
-        try:
-            subprocess.check_call([cmake_bin] + build_args)
-        except subprocess.CalledProcessError as err:
-            print(f"ERROR: CMake build failed with exit code {err.returncode}", file=sys.stderr, flush=True)
-            raise
+        sys.stdout.flush()
+        sys.stderr.flush()
+        build_proc = subprocess.Popen(
+            [cmake_bin] + build_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        build_output = []
+        for line in build_proc.stdout:
+            print(line, end="", flush=True)
+            build_output.append(line)
+        build_proc.wait()
+        if build_proc.returncode != 0:
+            err_msg = "".join(build_output[-50:])
+            raise RuntimeError(f"CMake build failed with code {build_proc.returncode}:\n{err_msg}")
 
         # Locate compiled pywrapfst binary
         built_files = []

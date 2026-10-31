@@ -164,6 +164,7 @@ if(Python3_FOUND AND CYTHON_EXECUTABLE)
 
 else()
   message(
-    STATUS "Python3 or Cython not found. Skipping Python extension build."
+    FATAL_ERROR
+      "Python3 or Cython not found! Python3_FOUND=${Python3_FOUND}, CYTHON_EXECUTABLE=${CYTHON_EXECUTABLE}, Python3_EXECUTABLE=${Python3_EXECUTABLE}"
   )
 endif()

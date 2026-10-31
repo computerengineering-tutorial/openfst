@@ -58,7 +58,7 @@ jobs:
           CIBW_BUILD: ${{ github.event.inputs.build_selector || 'cp39-* cp310-* cp311-* cp312-* cp313-*' }}
           CIBW_SKIP: "*musllinux*"
           CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
-          CIBW_BUILD_VERBOSITY: 2
+          CIBW_BUILD_VERBOSITY: 3
           CIBW_ENVIRONMENT: OPENFST_ROOT_DIR="${{ github.workspace }}" CMAKE_BUILD_PARALLEL_LEVEL="2"
           CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project" CMAKE_BUILD_PARALLEL_LEVEL="2"
 
