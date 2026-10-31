@@ -95,7 +95,10 @@ from openfst.extensions.python.cmemory cimport WrapUnique
 from openfst.extensions.python.cpywrapfst cimport SetFlag
 
 # Python imports.
-from absl import logging
+try:
+  from absl import logging
+except ImportError:
+  import logging
 import enum
 import numbers
 import os
