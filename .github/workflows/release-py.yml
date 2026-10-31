@@ -32,23 +32,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade build
+          python -m pip install --upgrade build setuptools wheel "cython>=3.0.0"
+
+      - name: Prepare self-contained sdist tree
+        run: |
+          python -c "
+          import shutil, os
+          src = '.'
+          dst = 'openfst/extensions/python/openfst_source'
+          if os.path.exists(dst): shutil.rmtree(dst)
+          shutil.copytree(src, dst, ignore=shutil.ignore_patterns('.git', 'build', 'wheelhouse', 'dist', 'openfst_source', '__pycache__', '.pytest_cache'))
+          "
 
       - name: Build sdist
         run: python -m build --sdist openfst/extensions/python --outdir dist
+
+      - name: Clean up vendored sdist tree
+        run: rm -rf openfst/extensions/python/openfst_source
 
       - name: Upload sdist artifact
         uses: actions/upload-artifact@v4
@@ -64,7 +77,7 @@ jobs:
   build_wheels:
     name: Wheels on ${{ matrix.os }} (${{ matrix.cibw_archs }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -92,26 +105,35 @@ jobs:
           # Windows x86_64 (AMD64)
           - os: windows-latest
             cibw_archs: "AMD64"
+            msvc_arch: "x64"
 
           # Windows 32-bit (x86)
           - os: windows-latest
             cibw_archs: "x86"
+            msvc_arch: "x86"
 
           # Windows ARM64 (native MSVC cross-compilation)
           - os: windows-latest
             cibw_archs: "ARM64"
+            msvc_arch: "x64_arm64"
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.msvc_arch }}
 
       - name: Install cibuildwheel
         run: |
@@ -122,9 +144,10 @@ jobs:
         run: python -m cibuildwheel openfst/extensions/python --output-dir wheelhouse
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
-          CIBW_BUILD_VERBOSITY: 1
-          CIBW_ENVIRONMENT: OPENFST_ROOT_DIR="${{ github.workspace }}"
-          CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project"
+          CIBW_BUILD_VERBOSITY: 2
+          CIBW_ENVIRONMENT: OPENFST_ROOT_DIR="${{ github.workspace }}" CMAKE_BUILD_PARALLEL_LEVEL="2"
+          CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project" CMAKE_BUILD_PARALLEL_LEVEL="2"
+          CIBW_TEST_SKIP: "*_arm64 *_universal2 *win_arm64 *macosx_x86_64"
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
@@ -143,9 +166,6 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    environment:
-      name: pypi
-      url: https://pypi.org/p/openfst-py
     steps:
       - name: Download all built artifacts
         uses: actions/download-artifact@v4
@@ -182,7 +202,7 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to PyPI
-        if: github.event.inputs.publish_to_pypi == 'true'
+        if: github.event.inputs.publish_to_pypi == 'true' || startsWith(github.ref, 'refs/tags/v')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/

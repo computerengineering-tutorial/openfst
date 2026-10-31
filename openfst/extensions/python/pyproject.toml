@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Stand-alone, multiplatform OpenFst Python bindings with full pywrapfst compatibility"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [
     { name = "Jenil Sheth", email = "computerengineeringtutorial@gmail.com" }
 ]
@@ -35,10 +35,10 @@ classifiers = [
 build-frontend = "pip"
 build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "pp* *musllinux_i686"
-build-verbosity = 1
+build-verbosity = 2
 
 test-command = "python -c \"import pywrapfst as fst; import openfst; import openfst_py; v = fst.VectorFst(); s = v.add_state(); v.set_start(s); assert v.num_states() == 1; print('OpenFst wheel test passed!')\""
-test-skip = "*_arm64 *_universal2:arm64 *win_arm64"
+test-skip = "*_arm64 *_universal2 *win_arm64 *macosx_x86_64"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "i686"]

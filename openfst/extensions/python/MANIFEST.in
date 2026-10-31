@@ -1,0 +1,10 @@
+include README.md
+include pyproject.toml
+include setup.py
+include *.pxd
+include *.pyx
+include *.pyi
+include py.typed
+recursive-include openfst_source *
+global-exclude *.py[cod] __pycache__ *.so *.dylib *.dll *.a *.o
+

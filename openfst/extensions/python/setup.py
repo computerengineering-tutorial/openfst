@@ -19,7 +19,15 @@ def find_openfst_root() -> Path:
     ):
         return Path(env_root).resolve()
 
-    # 2. Traverse upwards from this file
+    # 2. Vendored source inside this directory (for self-contained sdist)
+    vendored_root = CURRENT_DIR / "openfst_source"
+    if (
+        (vendored_root / "CMakeLists.txt").exists()
+        and (vendored_root / "cmake" / "OpenFstHelpers.cmake").exists()
+    ):
+        return vendored_root.resolve()
+
+    # 3. Traverse upwards from this file
     cur = CURRENT_DIR
     for parent in list(cur.parents):
         if (
@@ -28,7 +36,7 @@ def find_openfst_root() -> Path:
         ):
             return parent
 
-    # 3. Current working directory
+    # 4. Current working directory
     cwd = Path.cwd().resolve()
     if (
         (cwd / "CMakeLists.txt").exists()
@@ -100,11 +108,15 @@ class CMakeBuild(build_ext):
 
         # Build target pywrapfst
         jobs = os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL") or str(
-            os.cpu_count() or 4
+            min(os.cpu_count() or 2, 2)
         )
         build_args = ["--build", str(build_temp), "--target", "pywrapfst", "--config", cfg, "-j", jobs]
-        print(f"Building pywrapfst target: {build_args}")
-        subprocess.check_call([cmake_bin] + build_args)
+        print(f"Building pywrapfst target: {build_args}", flush=True)
+        try:
+            subprocess.check_call([cmake_bin] + build_args)
+        except subprocess.CalledProcessError as err:
+            print(f"ERROR: CMake build failed with exit code {err.returncode}", file=sys.stderr, flush=True)
+            raise
 
         # Locate compiled pywrapfst binary
         built_files = []
