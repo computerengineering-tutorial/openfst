@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       build_selector:
-        description: "Python versions to test (e.g. 'cp311-*' or 'cp39-* cp310-* cp311-* cp312-* cp313-*')"
+        description: "Python versions to test (e.g. 'cp314-*')"
         type: string
-        default: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+        default: "cp314-*"
   push:
     branches:
       - main
@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   test_linux_x86_64:
-    name: Build & Test (Ubuntu x86_64)
+    name: Build & Test (Ubuntu x86_64 - Python 3.14)
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -46,6 +46,20 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Prepare ccache directory
+        run: |
+          mkdir -p "${{ github.workspace }}/.ccache"
+          chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-linux-x86_64-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ccache-linux-x86_64-${{ github.ref_name }}-
+            ccache-linux-x86_64-
+
       - name: Install cibuildwheel
         run: |
           python -m pip install --upgrade pip
@@ -55,13 +69,20 @@ jobs:
         run: python -m cibuildwheel openfst/extensions/python --output-dir wheelhouse
         env:
           CIBW_ARCHS: "x86_64"
-          CIBW_BUILD: ${{ github.event.inputs.build_selector || 'cp39-* cp310-* cp311-* cp312-* cp313-*' }}
+          CIBW_BUILD: ${{ github.event.inputs.build_selector || 'cp314-*' }}
+          CIBW_PRERELEASE_PYTHONS: "1"
           CIBW_SKIP: "*musllinux*"
           CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_REQUIRES: "absl-py"
-          CIBW_ENVIRONMENT: OPENFST_ROOT_DIR="${{ github.workspace }}" CMAKE_BUILD_PARALLEL_LEVEL="2"
-          CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project" CMAKE_BUILD_PARALLEL_LEVEL="2"
+          CIBW_BEFORE_ALL_LINUX: "yum install -y ccache || dnf install -y ccache || apt-get install -y ccache || true"
+          CIBW_ENVIRONMENT: OPENFST_ROOT_DIR="${{ github.workspace }}" CMAKE_BUILD_PARALLEL_LEVEL="2" CCACHE_DIR="${{ github.workspace }}/.ccache" CCACHE_MAXSIZE="2G" CCACHE_SLOPPINESS="include_file_mtime,time_macros,locale" CCACHE_BASEDIR="${{ github.workspace }}"
+          CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project" CMAKE_BUILD_PARALLEL_LEVEL="2" CCACHE_DIR="/project/.ccache" CCACHE_MAXSIZE="2G" CCACHE_SLOPPINESS="include_file_mtime,time_macros,locale" CCACHE_BASEDIR="/project"
+
+      - name: Post-process ccache permissions
+        if: always()
+        run: |
+          chmod -R 777 "${{ github.workspace }}/.ccache" 2>/dev/null || true
 
       - name: Upload built test wheels
         uses: actions/upload-artifact@v4
@@ -69,4 +90,3 @@ jobs:
           name: openfst-py-test-wheels-linux-x86_64
           path: ./wheelhouse/*.whl
           if-no-files-found: error
-

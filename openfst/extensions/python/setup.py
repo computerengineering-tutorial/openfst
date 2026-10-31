@@ -87,6 +87,15 @@ class CMakeBuild(build_ext):
         if cython_bin:
             cmake_args.append(f"-DCYTHON_EXECUTABLE={cython_bin}")
 
+        # Enable ccache compiler launcher if available
+        ccache_bin = shutil.which("ccache") or os.environ.get("CMAKE_CXX_COMPILER_LAUNCHER")
+        if ccache_bin:
+            print(f"Compiler cache enabled: {ccache_bin}", flush=True)
+            cmake_args.extend([
+                f"-DCMAKE_C_COMPILER_LAUNCHER={ccache_bin}",
+                f"-DCMAKE_CXX_COMPILER_LAUNCHER={ccache_bin}",
+            ])
+
         # Use Ninja if available
         if shutil.which("ninja"):
             cmake_args.append("-GNinja")
@@ -250,6 +259,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Programming Language :: C++",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Text Processing :: Linguistic",
