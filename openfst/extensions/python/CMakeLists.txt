@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(Python3 COMPONENTS Interpreter Development)
+find_package(Python3 COMPONENTS Interpreter Development.Module)
 find_program(CYTHON_EXECUTABLE NAMES cython3 cython)
 
 if(Python3_FOUND AND CYTHON_EXECUTABLE)
