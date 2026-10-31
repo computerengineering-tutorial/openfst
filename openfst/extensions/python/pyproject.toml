@@ -34,7 +34,7 @@ classifiers = [
 [tool.cibuildwheel]
 build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
-skip = "pp* *musllinux_i686"
+skip = "*musllinux*"
 build-verbosity = 2
 
 test-command = "python -c \"import pywrapfst as fst; import openfst; import openfst_py; v = fst.VectorFst(); s = v.add_state(); v.set_start(s); assert v.num_states() == 1; print('OpenFst wheel test passed!')\""
@@ -42,12 +42,12 @@ test-skip = "*_arm64 *_universal2 *win_arm64 *macosx_x86_64"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "i686"]
-before-build = "pip install --upgrade cmake ninja cython"
+before-build = "pip install --upgrade setuptools wheel cython cmake ninja"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64", "universal2"]
-before-build = "pip install --upgrade cmake ninja cython"
+before-build = "pip install --upgrade setuptools wheel cython cmake ninja"
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86", "ARM64"]
-before-build = "pip install --upgrade cmake ninja cython"
+before-build = "pip install --upgrade setuptools wheel cython cmake ninja"
