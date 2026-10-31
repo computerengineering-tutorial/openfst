@@ -108,10 +108,14 @@ else()
     # is failing here.  Investigate, fix, and re-enable.
     -Wno-overloaded-virtual
     -Wno-sign-compare
-    # Temporarily disabled warnings that we would like to turn on.
-    -Wno-defaulted-function-deleted
-    -Wno-nullability-completeness
   )
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Temporarily disabled warnings that we would like to turn on in Clang.
+    add_compile_options(
+      -Wno-defaulted-function-deleted
+      -Wno-nullability-completeness
+    )
+  endif()
 endif()
 
 # Linker options.

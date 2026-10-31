@@ -160,8 +160,10 @@ struct Operation {
 // Prevents the compiler and linker from dropping a symbol even if it appears
 // unused. This is essential for static registration variables whose
 // constructors perform registration but are never directly referenced.
-#if defined(__GNUC__)
+#if defined(__clang__)
 #define OPENFST_KEEP_SYMBOL [[gnu::used, gnu::retain]]
+#elif defined(__GNUC__)
+#define OPENFST_KEEP_SYMBOL [[gnu::used]]
 #else
 #define OPENFST_KEEP_SYMBOL
 #endif
