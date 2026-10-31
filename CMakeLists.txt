@@ -108,6 +108,7 @@ else()
     # is failing here.  Investigate, fix, and re-enable.
     -Wno-overloaded-virtual
     -Wno-sign-compare
+    -Wno-dangling-pointer
   )
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # Temporarily disabled warnings that we would like to turn on in Clang.

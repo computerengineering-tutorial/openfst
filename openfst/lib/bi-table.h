@@ -173,6 +173,10 @@ class CompactHashBiTable {
 
   I FindId(const T& entry, bool insert = true) {
     current_entry_ = &entry;
+    struct EntryGuard {
+      const T*& ref;
+      ~EntryGuard() { ref = nullptr; }
+    } guard{current_entry_};
     if (insert) {
       auto [iter, was_inserted] = keys_.insert(kCurrentKey);
       if (!was_inserted) return *iter;  // Already exists.
@@ -343,6 +347,10 @@ class VectorHashBiTable {
       return fp2id_[fp] - 1;  // NB: assoc_value = ID + 1.
     } else {                  // Uses the hash table otherwise.
       current_entry_ = &entry;
+      struct EntryGuard {
+        const T*& ref;
+        ~EntryGuard() { ref = nullptr; }
+      } guard{current_entry_};
       if (const auto it = keys_.find(kCurrentKey); it != keys_.end()) {
         return *it;
       } else {

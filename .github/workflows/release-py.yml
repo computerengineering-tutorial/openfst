@@ -171,9 +171,11 @@ jobs:
           CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_REQUIRES: "absl-py"
+          CIBW_CONTAINER_ENGINE: "${{ runner.os == 'Linux' && format('docker; create_args: -v {0}/.ccache:/ccache', github.workspace) || '' }}"
           CIBW_BEFORE_ALL_LINUX: "yum install -y ccache || dnf install -y ccache || apt-get install -y ccache || true"
+          CIBW_AFTER_ALL_LINUX: "ccache -s || true"
           CIBW_ENVIRONMENT: OPENFST_ROOT_DIR="${{ github.workspace }}" CMAKE_BUILD_PARALLEL_LEVEL="2" CCACHE_DIR="${{ github.workspace }}/.ccache" CCACHE_MAXSIZE="2G" CCACHE_SLOPPINESS="include_file_mtime,time_macros,locale" CCACHE_BASEDIR="${{ github.workspace }}"
-          CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project" CMAKE_BUILD_PARALLEL_LEVEL="2" CCACHE_DIR="/project/.ccache" CCACHE_MAXSIZE="2G" CCACHE_SLOPPINESS="include_file_mtime,time_macros,locale" CCACHE_BASEDIR="/project"
+          CIBW_ENVIRONMENT_LINUX: OPENFST_ROOT_DIR="/project" CMAKE_BUILD_PARALLEL_LEVEL="2" CCACHE_DIR="/ccache" CCACHE_MAXSIZE="2G" CCACHE_SLOPPINESS="include_file_mtime,time_macros,locale" CCACHE_BASEDIR="/project"
           CIBW_TEST_SKIP: "*_arm64 *_universal2 *win_arm64 *macosx_x86_64"
 
       - name: Post-process ccache permissions
@@ -181,6 +183,11 @@ jobs:
         shell: bash
         run: |
           chmod -R 777 "${{ github.workspace }}/.ccache" 2>/dev/null || true
+
+      - name: Print ccache statistics
+        if: always()
+        shell: bash
+        run: ccache -s 2>/dev/null || true
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
