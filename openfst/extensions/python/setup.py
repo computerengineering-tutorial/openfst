@@ -191,7 +191,6 @@ setup(
     description="Stand-alone, multiplatform OpenFst Python bindings with full pywrapfst compatibility",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    license="Apache-2.0",
     url="https://github.com/google-research/openfst",
     packages=[],
     py_modules=[],

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64.0.0", "wheel", "cython>=3.0.0"]
+requires = ["setuptools>=64.0.0", "wheel", "cython>=3.0.0", "cmake>=3.22", "ninja"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -32,7 +32,7 @@ classifiers = [
 ]
 
 [tool.cibuildwheel]
-build-frontend = "pip"
+build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "pp* *musllinux_i686"
 build-verbosity = 2
